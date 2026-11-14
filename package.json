@@ -49,7 +49,8 @@
     "licenses": "node scripts/generate-licenses.js",
     "assets": "node scripts/generate-assets.js",
     "vectors": "node scripts/generate-native-vectors.js",
-    "test:ci": "jest --ci --coverage"
+    "test:ci": "jest --ci --coverage",
+    "mutation": "stryker run"
   },
   "private": true
 }
