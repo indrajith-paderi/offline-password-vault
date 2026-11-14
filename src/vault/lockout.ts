@@ -59,7 +59,7 @@ export function succeed(): LockoutState {
   return INITIAL_LOCKOUT;
 }
 
-export function parseLockout(json: string | null): LockoutState {
+export function parseLockout(json: string | null, now: Clock): LockoutState {
   if (!json) return INITIAL_LOCKOUT;
   try {
     const v = JSON.parse(json);
@@ -73,6 +73,6 @@ export function parseLockout(json: string | null): LockoutState {
       lockedAt: okStamp(v.lockedAt) ? v.lockedAt : null,
     };
   } catch {
-    return { fails: [], lockedAt: { wall: Date.now(), mono: 0, boot: 'corrupt' } };
+    return { fails: [], lockedAt: now };
   }
 }

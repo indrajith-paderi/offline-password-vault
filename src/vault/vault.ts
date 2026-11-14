@@ -361,7 +361,7 @@ export class Vault {
 
   private async loadLockout(): Promise<LockoutState> {
     const raw = await SecureStore.getItemAsync(KV_LOCKOUT, DEVICE_ONLY);
-    const parsed = parseLockout(raw);
+    const parsed = parseLockout(raw, this.clock());
     if (raw && JSON.stringify(parsed) !== raw) await this.saveLockout(parsed);
     return parsed;
   }

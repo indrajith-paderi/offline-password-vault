@@ -63,6 +63,8 @@ describe('lockout', () => {
   });
 
   it('fails closed on corrupted state', () => {
-    expect(attemptsLeft(parseLockout('{not json'), at(Date.now()))).toBe(0);
+    const now = at(Date.now());
+    expect(attemptsLeft(parseLockout('{not json', now), now)).toBe(0);
+    expect(lockRemainingMs(parseLockout('{not json', now), now)).toBe(LOCK_MS);
   });
 });
