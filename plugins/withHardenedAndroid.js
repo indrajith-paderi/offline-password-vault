@@ -41,34 +41,38 @@ const FULL_BACKUP_CONTENT = `<?xml version="1.0" encoding="utf-8"?>
 </full-backup-content>
 `;
 
+function hardenManifest(androidManifest, { keepNetwork = false } = {}) {
+  const manifest = androidManifest.manifest;
+  manifest.$['xmlns:tools'] = 'http://schemas.android.com/tools';
+
+  const blocked = keepNetwork
+    ? NETWORK_PERMISSIONS.filter((p) => p !== 'android.permission.INTERNET')
+    : NETWORK_PERMISSIONS;
+
+  const existing = (manifest['uses-permission'] || []).filter(
+    (p) => !blocked.includes(p.$['android:name']),
+  );
+  manifest['uses-permission'] = [
+    ...existing,
+    ...blocked.map((name) => ({ $: { 'android:name': name, 'tools:node': 'remove' } })),
+  ];
+
+  const app = AndroidConfig.Manifest.getMainApplicationOrThrow(androidManifest);
+  app.$['android:allowBackup'] = 'false';
+  app.$['android:fullBackupContent'] = '@xml/vault_full_backup_content';
+  app.$['android:dataExtractionRules'] = '@xml/vault_data_extraction_rules';
+  app.$['android:usesCleartextTraffic'] = 'false';
+  const toolsReplace = new Set((app.$['tools:replace'] || '').split(',').filter(Boolean));
+  ['android:allowBackup', 'android:fullBackupContent', 'android:dataExtractionRules'].forEach((a) =>
+    toolsReplace.add(a),
+  );
+  app.$['tools:replace'] = [...toolsReplace].join(',');
+  return androidManifest;
+}
+
 function withManifestHardening(config) {
   return withAndroidManifest(config, (cfg) => {
-    const manifest = cfg.modResults.manifest;
-    manifest.$['xmlns:tools'] = 'http://schemas.android.com/tools';
-
-    const keepNetwork = process.env.VAULT_DEV_NETWORK === '1';
-    const blocked = keepNetwork
-      ? NETWORK_PERMISSIONS.filter((p) => p !== 'android.permission.INTERNET')
-      : NETWORK_PERMISSIONS;
-
-    const existing = (manifest['uses-permission'] || []).filter(
-      (p) => !blocked.includes(p.$['android:name']),
-    );
-    manifest['uses-permission'] = [
-      ...existing,
-      ...blocked.map((name) => ({ $: { 'android:name': name, 'tools:node': 'remove' } })),
-    ];
-
-    const app = AndroidConfig.Manifest.getMainApplicationOrThrow(cfg.modResults);
-    app.$['android:allowBackup'] = 'false';
-    app.$['android:fullBackupContent'] = '@xml/vault_full_backup_content';
-    app.$['android:dataExtractionRules'] = '@xml/vault_data_extraction_rules';
-    app.$['android:usesCleartextTraffic'] = 'false';
-    const toolsReplace = new Set((app.$['tools:replace'] || '').split(',').filter(Boolean));
-    ['android:allowBackup', 'android:fullBackupContent', 'android:dataExtractionRules'].forEach(
-      (a) => toolsReplace.add(a),
-    );
-    app.$['tools:replace'] = [...toolsReplace].join(',');
+    hardenManifest(cfg.modResults, { keepNetwork: process.env.VAULT_DEV_NETWORK === '1' });
     return cfg;
   });
 }
@@ -86,6 +90,12 @@ function withBackupRuleFiles(config) {
   ]);
 }
 
-module.exports = function withHardenedAndroid(config) {
+function withHardenedAndroid(config) {
   return withBackupRuleFiles(withManifestHardening(config));
-};
+}
+
+module.exports = withHardenedAndroid;
+module.exports.hardenManifest = hardenManifest;
+module.exports.NETWORK_PERMISSIONS = NETWORK_PERMISSIONS;
+module.exports.DATA_EXTRACTION_RULES = DATA_EXTRACTION_RULES;
+module.exports.FULL_BACKUP_CONTENT = FULL_BACKUP_CONTENT;
