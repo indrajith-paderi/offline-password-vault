@@ -1,4 +1,5 @@
 import * as ScreenCapture from 'expo-screen-capture';
+import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, BackHandler, Platform, View } from 'react-native';
@@ -22,6 +23,9 @@ import { useTheme } from './src/ui/theme';
 import { SqliteStore } from './src/vault/sqliteStore';
 import { Settings, Vault } from './src/vault/vault';
 
+void SplashScreen.preventAutoHideAsync();
+SplashScreen.setOptions({ duration: 250, fade: true });
+
 type Boot =
   | { phase: 'loading' }
   | { phase: 'ready'; vault: Vault; initialized: boolean; unlocked: boolean; integrity: IntegrityVerdict };
@@ -44,6 +48,7 @@ export default function App() {
     let unsub: (() => void) | undefined;
     void boot().then(({ vault, initialized, integrity }) => {
       setState({ phase: 'ready', vault, initialized, unlocked: false, integrity });
+      void SplashScreen.hideAsync();
       unsub = vault.onChange(async (unlocked) => {
         const init = await vault.isInitialized();
         if (unlocked) setSettings(await vault.getSettings());

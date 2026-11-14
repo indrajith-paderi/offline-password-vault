@@ -3,7 +3,7 @@ import { ActivityIndicator, Alert, Pressable, Text, View } from 'react-native';
 import { Vault } from '../../vault/vault';
 import { formatDuration, nextFrame } from '../AppContext';
 import { PinPad } from '../components/PinPad';
-import { H1, Notice, P, Screen } from '../components/ui';
+import { AppMark, H1, Notice, P, Screen } from '../components/ui';
 import { useTheme } from '../theme';
 
 const BIO_PROMPT = 'Unlock your vault';
@@ -86,7 +86,8 @@ export function LockScreen({ vault, blocked, warnings }: { vault: Vault; blocked
   return (
     <Screen>
       <View style={{ alignItems: 'center', gap: 8, marginTop: 24, marginBottom: 16 }}>
-        <H1>Vault locked</H1>
+        <AppMark size={64} />
+        <H1>Keystill</H1>
         <P muted>{locked ? 'Too many wrong PINs.' : 'Enter your 4-digit PIN'}</P>
       </View>
       {blocked && <Notice text={`${blocked} Unlocking is disabled.`} />}

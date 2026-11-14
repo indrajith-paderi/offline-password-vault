@@ -4,7 +4,7 @@ Pod::Spec.new do |s|
   s.summary        = 'Hardware-bound keys, platform AES-GCM, sensitive clipboard and integrity checks'
   s.description    = s.summary
   s.license        = 'MIT'
-  s.author         = 'Offline Vault'
+  s.author         = 'Keystill'
   s.homepage       = 'https://example.invalid'
   s.platforms      = { :ios => '16.4' }
   s.swift_version  = '5.9'

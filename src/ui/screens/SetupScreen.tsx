@@ -3,7 +3,7 @@ import { ActivityIndicator, View } from 'react-native';
 import { Vault } from '../../vault/vault';
 import { nextFrame } from '../AppContext';
 import { PinPad } from '../components/PinPad';
-import { Button, H1, Notice, P, Screen } from '../components/ui';
+import { AppMark, Button, H1, Notice, P, Screen } from '../components/ui';
 import { RestoreFlow } from './RestoreScreen';
 
 type Step = 'welcome' | 'pin1' | 'pin2' | 'restore' | 'working';
@@ -58,7 +58,10 @@ export function SetupScreen({ vault }: { vault: Vault }) {
 
   return (
     <Screen>
-      <H1>Offline Vault</H1>
+      <View style={{ alignItems: 'center', gap: 12, marginTop: 32, marginBottom: 8 }}>
+        <AppMark size={88} />
+        <H1>Keystill</H1>
+      </View>
       <P muted>
         Your passwords stay on this phone, encrypted with AES-256-GCM. No account, no cloud, no
         internet permission.

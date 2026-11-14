@@ -1,6 +1,7 @@
 import React, { ReactNode } from 'react';
 import {
   ActivityIndicator,
+  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -124,6 +125,16 @@ export function Notice({ text, kind = 'warn' }: { text: string; kind?: 'warn' | 
     >
       <Text style={{ color: kind === 'warn' ? t.warn : t.muted, lineHeight: 20 }}>{text}</Text>
     </View>
+  );
+}
+
+export function AppMark({ size = 72 }: { size?: number }) {
+  return (
+    <Image
+      source={require('../../../assets/icon.png')}
+      accessibilityIgnoresInvertColors
+      style={{ width: size, height: size, borderRadius: size * 0.25 }}
+    />
   );
 }
 
