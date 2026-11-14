@@ -67,4 +67,32 @@ describe('lockout', () => {
     expect(attemptsLeft(parseLockout('{not json', now), now)).toBe(0);
     expect(lockRemainingMs(parseLockout('{not json', now), now)).toBe(LOCK_MS);
   });
+
+  it('after a reboot falls back to the wall clock alone (documented limitation)', () => {
+    let s = INITIAL_LOCKOUT;
+    for (let i = 0; i < 3; i++) s = wrong(s, at(i));
+    expect(lockRemainingMs(s, at(30 * 60 * 1000, 10, 'b2'))).toBe(LOCK_MS - 30 * 60 * 1000 + 2);
+    expect(attemptsLeft(s, at(H + 2, 10, 'b2'))).toBe(3);
+  });
+
+  it('keeps counting failures across a reboot within the hour', () => {
+    let s = wrong(INITIAL_LOCKOUT, at(0));
+    s = wrong(s, at(1000));
+    expect(attemptsLeft(s, at(2000, 5, 'b2'))).toBe(1);
+  });
+
+  it.each([
+    ['fails is not an array', '{"fails":"x","lockedAt":null}', 3],
+    ['stamps are malformed', '{"fails":[{"wall":"1"},{"wall":1,"mono":1}],"lockedAt":{"wall":1}}', 3],
+    ['the record is empty', '{}', 3],
+  ])('drops invalid parts when %s', (_label, json, left) => {
+    const now = at(10);
+    expect(attemptsLeft(parseLockout(json, now), now)).toBe(left);
+  });
+
+  it('keeps valid stamps from a partially valid record', () => {
+    const now = at(10);
+    const json = JSON.stringify({ fails: [at(1), { wall: 'x' }, at(2)], lockedAt: null });
+    expect(attemptsLeft(parseLockout(json, now), now)).toBe(1);
+  });
 });

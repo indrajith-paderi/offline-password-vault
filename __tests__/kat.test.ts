@@ -82,3 +82,13 @@ describe('AES-256-GCM known answers and blob layout', () => {
     expect(() => seal(new Uint8Array(33), new Uint8Array(1), 'x')).toThrow();
   });
 });
+
+describe('vault key wrapping defaults', () => {
+  it('uses the production vault KDF when none is given', async () => {
+    const { wrapVaultKey, unwrapVaultKey } = await import('../src/vault/keys');
+    const key = new Uint8Array(32).fill(3);
+    const header = await wrapVaultKey('4821', key);
+    expect(header.kdf).toEqual(VAULT_KDF);
+    expect(await unwrapVaultKey('4821', header)).toEqual(key);
+  });
+});
