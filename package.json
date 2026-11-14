@@ -48,7 +48,8 @@
     "typecheck": "tsc --noEmit",
     "licenses": "node scripts/generate-licenses.js",
     "assets": "node scripts/generate-assets.js",
-    "vectors": "node scripts/generate-native-vectors.js"
+    "vectors": "node scripts/generate-native-vectors.js",
+    "test:ci": "jest --ci --coverage"
   },
   "private": true
 }

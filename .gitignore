@@ -44,3 +44,8 @@ yarn-error.*
 .claude/
 AGENTS.md
 CLAUDE.md
+
+# test output
+coverage/
+reports/
+.stryker-tmp/

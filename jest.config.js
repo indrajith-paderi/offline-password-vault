@@ -33,4 +33,21 @@ module.exports = {
   clearMocks: true,
   errorOnDeprecated: true,
   testTimeout: 30000,
+  collectCoverageFrom: [
+    'src/crypto/**/*.ts',
+    'src/vault/**/*.ts',
+    'src/backup/format.ts',
+    'src/backup/passwordPolicy.ts',
+    'src/security/idleLocker.ts',
+    'src/security/clipboard.ts',
+    'src/security/integrity.ts',
+  ],
+  coverageReporters: ['text-summary', 'lcov'],
+  coverageThreshold: {
+    global: { statements: 95, branches: 90, functions: 95, lines: 95 },
+    './src/crypto/': { statements: 100, branches: 100, functions: 100, lines: 100 },
+    './src/backup/format.ts': { statements: 98, branches: 95, functions: 100, lines: 98 },
+    './src/vault/lockout.ts': { statements: 100, branches: 95, functions: 100, lines: 100 },
+    './src/vault/keys.ts': { statements: 100, branches: 95, functions: 100, lines: 100 },
+  },
 };
