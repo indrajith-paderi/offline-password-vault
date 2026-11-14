@@ -24,6 +24,7 @@ module.exports = {
     '.*/modules/secure-native$': '<rootDir>/__mocks__/secure-native.ts',
     '^expo-secure-store$': '<rootDir>/__mocks__/expo-secure-store.ts',
     '^expo-constants$': '<rootDir>/__mocks__/expo-constants.ts',
+    '^expo-sqlite$': '<rootDir>/__mocks__/expo-sqlite.ts',
   },
   setupFilesAfterEnv: ['<rootDir>/__tests__/setup.ts'],
   testMatch: ['**/*.test.ts'],
