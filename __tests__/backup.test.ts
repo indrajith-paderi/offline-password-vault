@@ -75,7 +75,6 @@ describe('phone migration', () => {
     await oldPhone.save({ title: 'Bank', username: 'u', url: '', password: 'p@ss', notes: '' });
     const file = createBackup(await oldPhone.exportAll(), PW, { appVersion: '1', kdf: FAST });
 
-    // New phone: different hardware, empty storage.
     kv.clear();
     device.resetDevice();
     const { entries: restored } = openBackup(file, PW);

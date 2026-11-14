@@ -69,7 +69,7 @@ describe('vault', () => {
     const { store, vault } = await freshVault();
     await vault.save(sample);
     vault.lock();
-    device.resetDevice(); // "different hardware"
+    device.resetDevice();
     const thief = new Vault(store, clock, FAST);
     expect(await thief.unlockWithPin('4821')).toMatchObject({ ok: false, reason: 'wrong-pin' });
   });
@@ -101,7 +101,7 @@ describe('vault', () => {
     vault.lock();
     expect(await vault.unlockWithBiometrics('Unlock')).toBe(true);
     vault.lock();
-    kv.set('ov.bio.vk', Buffer.alloc(32, 7).toString('base64')); // forged key
+    kv.set('ov.bio.vk', Buffer.alloc(32, 7).toString('base64'));
     expect(await vault.unlockWithBiometrics('Unlock')).toBe(false);
     expect(await vault.biometricsEnabled()).toBe(false);
   });

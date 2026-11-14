@@ -1,5 +1,3 @@
-/** Pure-logic tests run in Node: libsodium's WASM build stands in for the JSI one,
- *  and Node's crypto stands in for the platform AES-GCM module. */
 module.exports = {
   testEnvironment: 'node',
   roots: ['<rootDir>/__tests__'],

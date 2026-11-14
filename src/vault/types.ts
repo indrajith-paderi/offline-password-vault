@@ -13,5 +13,4 @@ export type EntrySecret = {
 
 export type Entry = EntrySummary & EntrySecret & { id: string };
 
-/** What's actually on disk: an id and two opaque blobs. No titles, no timestamps, nothing. */
 export type EncryptedRow = { id: string; summary: Uint8Array; secret: Uint8Array };

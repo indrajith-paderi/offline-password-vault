@@ -1,6 +1,5 @@
 import { createCipheriv, createDecipheriv, createHmac, randomBytes } from 'crypto';
 
-// One "hardware" key per test process. resetDevice() simulates a brand-new phone.
 let deviceKey = randomBytes(32);
 let mono = 1_000_000;
 let boot = 'boot-1';

@@ -1,12 +1,3 @@
-/**
- * Locks the Android manifest down for an offline vault:
- *  - strips every network permission (the OS then refuses to open sockets for us)
- *  - disables cloud backup AND device-to-device transfer of app data
- *  - forbids cleartext traffic, just in case something sneaks a socket in
- *
- * Dev builds need INTERNET to talk to Metro, so `VAULT_DEV_NETWORK=1 npx expo prebuild`
- * keeps it. Never ship a build made that way.
- */
 const fs = require('fs');
 const path = require('path');
 const { withAndroidManifest, withDangerousMod, AndroidConfig } = require('expo/config-plugins');
@@ -63,7 +54,6 @@ function withManifestHardening(config) {
     const existing = (manifest['uses-permission'] || []).filter(
       (p) => !blocked.includes(p.$['android:name']),
     );
-    // tools:node="remove" also strips permissions merged in from libraries.
     manifest['uses-permission'] = [
       ...existing,
       ...blocked.map((name) => ({ $: { 'android:name': name, 'tools:node': 'remove' } })),

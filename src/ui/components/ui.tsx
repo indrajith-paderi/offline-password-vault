@@ -95,7 +95,6 @@ export function Field({ label, ...props }: TextInputProps & { label: string }) {
         placeholderTextColor={t.muted}
         autoCorrect={false}
         autoCapitalize="none"
-        // Keep keyboards from learning or suggesting anything typed here.
         importantForAutofill="no"
         {...props}
         style={[

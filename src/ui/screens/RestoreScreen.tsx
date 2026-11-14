@@ -17,18 +17,11 @@ import { Button, Card, Field, Notice, P, Screen } from '../components/ui';
 
 type Mode = 'new-device' | 'existing';
 
-/** Wrapper used from Settings, where the vault is already unlocked. */
 export function RestoreScreen() {
   const { vault, back } = useApp();
   return <RestoreFlow mode="existing" vault={vault} onDone={back} onCancel={back} />;
 }
 
-/**
- * pick file -> show date/version -> backup password -> fully decrypt + validate
- *   -> new device: choose a PIN, create vault (fresh hardware key), import
- *   -> existing:   confirm replace or merge
- * The live vault is untouched until the very last step.
- */
 export function RestoreFlow({
   mode,
   vault,
@@ -85,7 +78,6 @@ export function RestoreFlow({
     try {
       const count = entries.length;
       if (mode === 'new-device') {
-        // Brand-new hardware key and vault key on this phone; nothing reused from the old one.
         await vault.create(pin!, entries);
       } else {
         await vault.importEntries(entries, how);
@@ -125,7 +117,6 @@ export function RestoreFlow({
     );
   }
 
-  // Step 4 (new device): choose a PIN for this phone.
   if (entries && mode === 'new-device') {
     return (
       <Screen title="Set a PIN for this phone" onBack={() => setPin1(null)}>
@@ -149,7 +140,6 @@ export function RestoreFlow({
     );
   }
 
-  // Step 4 (existing vault): replace or merge.
   if (entries) {
     return (
       <Screen title="Restore" onBack={onCancel}>

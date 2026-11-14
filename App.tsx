@@ -26,8 +26,6 @@ type Boot =
   | { phase: 'ready'; vault: Vault; initialized: boolean; unlocked: boolean; integrity: IntegrityVerdict };
 
 async function boot(): Promise<{ vault: Vault; initialized: boolean; integrity: IntegrityVerdict }> {
-  // FLAG_SECURE on Android (no screenshots, recordings or recents thumbnails);
-  // blur in the iOS app switcher.
   await ScreenCapture.preventScreenCaptureAsync();
   if (Platform.OS === 'ios') await ScreenCapture.enableAppSwitcherProtectionAsync(0.9);
   await sodium.ready;
@@ -49,7 +47,6 @@ export default function App() {
         const init = await vault.isInitialized();
         if (unlocked) setSettings(await vault.getSettings());
         else void clearCopiedSecret();
-        // Every lock throws away the navigation stack, and with it any decrypted screen state.
         setStack([{ name: 'list' }]);
         setState((s) => (s.phase === 'ready' ? { ...s, initialized: init, unlocked } : s));
       });

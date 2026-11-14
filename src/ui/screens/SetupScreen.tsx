@@ -8,7 +8,6 @@ import { RestoreFlow } from './RestoreScreen';
 
 type Step = 'welcome' | 'pin1' | 'pin2' | 'restore' | 'working';
 
-/** First launch: create a vault, or bring one over from an old phone. */
 export function SetupScreen({ vault }: { vault: Vault }) {
   const [step, setStep] = useState<Step>('welcome');
   const [first, setFirst] = useState('');

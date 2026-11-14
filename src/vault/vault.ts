@@ -30,7 +30,6 @@ const KV_LOCKOUT = 'ov.lockout';
 const KV_BIO_KEY = 'ov.bio.vk';
 const KV_LAST_PIN = 'ov.lastPinUnlock';
 
-/** Biometrics are a convenience, not a substitute: the PIN is required at least this often. */
 export const BIOMETRIC_MAX_AGE_MS = 72 * 60 * 60 * 1000;
 
 const DEVICE_ONLY = { keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY };
@@ -63,7 +62,6 @@ export function systemClock(): Clock {
 type Listener = (unlocked: boolean) => void;
 
 export class Vault {
-  /** The only copy of the vault key in memory. Wiped on lock. */
   private key: Uint8Array | null = null;
   private listeners = new Set<Listener>();
 
@@ -72,8 +70,6 @@ export class Vault {
     private clock: () => Clock = systemClock,
     private kdf: KdfParams = VAULT_KDF,
   ) {}
-
-  // ---- state -----------------------------------------------------------------------------
 
   get isUnlocked(): boolean {
     return this.key !== null;
@@ -104,19 +100,12 @@ export class Vault {
     this.emit();
   }
 
-  // ---- setup -----------------------------------------------------------------------------
-
-  /**
-   * Fresh vault with a fresh hardware key. Also used after restoring onto a new phone,
-   * so the old phone's device keys are never reused.
-   */
   async create(pin: string, initialEntries: Entry[] = []): Promise<void> {
     if (!isValidPin(pin)) throw new Error('PIN must be exactly 4 digits');
     await SecureNative.deleteDeviceKey();
     await SecureStore.deleteItemAsync(KV_BIO_KEY);
     const vaultKey = newVaultKey();
     const header = await wrapVaultKey(pin, vaultKey, this.kdf);
-    // Hold the key quietly until everything is written, then announce we're open.
     this.key = vaultKey;
     try {
       const rows = initialEntries.map((e) => this.encryptEntry(e));
@@ -130,8 +119,6 @@ export class Vault {
     this.emit();
   }
 
-  // ---- unlock ----------------------------------------------------------------------------
-
   async lockoutStatus(): Promise<{ attemptsLeft: number; lockedForMs: number }> {
     const s = await this.loadLockout();
     const now = this.clock();
@@ -144,7 +131,6 @@ export class Vault {
     const lockedForMs = lockRemainingMs(state, now);
     if (lockedForMs > 0) return { ok: false, reason: 'locked', lockedForMs };
 
-    // Persist the attempt first; only a correct PIN takes it back.
     state = beginAttempt(state, now);
     await this.saveLockout(state);
 
@@ -171,12 +157,10 @@ export class Vault {
   }
 
   async biometricsEnabled(): Promise<boolean> {
-    // Presence flag lives in meta so we can check without triggering a biometric prompt.
     const flag = await this.store.getMeta('bio');
     return flag !== null && flag[0] === 1;
   }
 
-  /** Is biometric unlock allowed right now? False if disabled or the PIN is overdue. */
   async canUseBiometrics(): Promise<boolean> {
     if (!(await this.biometricsEnabled())) return false;
     const last = Number(await SecureStore.getItemAsync(KV_LAST_PIN, DEVICE_ONLY));
@@ -188,8 +172,6 @@ export class Vault {
     if (!SecureStore.canUseBiometricAuthentication()) {
       throw new Error('Biometric authentication is not available on this device');
     }
-    // Stored under a Keystore/Keychain key that requires a strong biometric and is
-    // invalidated when fingerprints/faces are added. The PIN itself is never stored.
     await SecureStore.setItemAsync(KV_BIO_KEY, toBase64(key), {
       requireAuthentication: true,
       authenticationPrompt: prompt,
@@ -203,7 +185,6 @@ export class Vault {
     await this.store.setMeta({ bio: Uint8Array.of(0) });
   }
 
-  /** Returns false if cancelled, unavailable, or the biometric key was invalidated. */
   async unlockWithBiometrics(prompt: string): Promise<boolean> {
     if (!(await this.canUseBiometrics())) return false;
     let b64: string | null = null;
@@ -217,12 +198,10 @@ export class Vault {
       return false;
     }
     if (!b64) {
-      // Key invalidated (new fingerprint enrolled, etc.). Make them use the PIN.
       await this.disableBiometrics();
       return false;
     }
     const candidate = fromBase64(b64);
-    // Prove it's the real vault key before trusting it.
     if (!(await this.verifyKey(candidate))) {
       wipe(candidate);
       await this.disableBiometrics();
@@ -235,15 +214,12 @@ export class Vault {
   async changePin(currentPin: string, newPin: string): Promise<UnlockResult> {
     if (!isValidPin(newPin)) throw new Error('PIN must be exactly 4 digits');
     this.requireKey();
-    // Re-verify through the normal path so lockout applies to PIN changes too.
     const check = await this.unlockWithPin(currentPin);
     if (!check.ok) return check;
     const header = await wrapVaultKey(newPin, this.requireKey(), this.kdf);
     await this.store.setMeta({ [META_HEADER]: encodeHeader(header) });
     return { ok: true };
   }
-
-  // ---- records ---------------------------------------------------------------------------
 
   async list(): Promise<ListedEntry[]> {
     const key = this.requireKey();
@@ -256,7 +232,6 @@ export class Vault {
     return out.sort((a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: 'base' }));
   }
 
-  /** Secrets are decrypted one at a time, only when you actually look at them. */
   async getSecret(id: string): Promise<EntrySecret> {
     const key = this.requireKey();
     const r = await this.store.getRow(id);
@@ -290,16 +265,11 @@ export class Vault {
     await this.store.deleteRow(id);
   }
 
-  /** Everything, decrypted, for building a backup. Caller must drop it ASAP. */
   async exportAll(): Promise<Entry[]> {
     const rows = await this.store.listRows();
     return Promise.all(rows.map((r) => this.get(r.id)));
   }
 
-  /**
-   * Restore entries. "replace" swaps the vault contents in one transaction; "merge" keeps
-   * existing entries and adds/overwrites by id.
-   */
   async importEntries(entries: Entry[], mode: 'replace' | 'merge'): Promise<number> {
     this.requireKey();
     const rows = entries.map((e) => this.encryptEntry(e));
@@ -316,7 +286,6 @@ export class Vault {
     return rows.length;
   }
 
-  /** Nuke it from orbit. Deleting the hardware key alone makes the old data unrecoverable. */
   async destroy(): Promise<void> {
     this.lock();
     await SecureNative.deleteDeviceKey();
@@ -326,8 +295,6 @@ export class Vault {
     await this.store.wipe();
     this.emit();
   }
-
-  // ---- settings (not secret, stored in the clear) ----------------------------------------
 
   async getSettings(): Promise<Settings> {
     const raw = await this.store.getMeta('settings');
@@ -342,8 +309,6 @@ export class Vault {
   async saveSettings(s: Settings): Promise<void> {
     await this.store.setMeta({ settings: utf8Encode(JSON.stringify(s)) });
   }
-
-  // ---- internals -------------------------------------------------------------------------
 
   private setKey(k: Uint8Array) {
     if (this.key && this.key !== k) wipe(this.key);
@@ -368,7 +333,6 @@ export class Vault {
     };
   }
 
-  /** A biometric-released key is only trusted if it decrypts something real. */
   private async verifyKey(candidate: Uint8Array): Promise<boolean> {
     const canary = await this.store.getMeta('canary');
     if (!canary) return false;
@@ -382,7 +346,6 @@ export class Vault {
 
   private async markPinUnlock() {
     await SecureStore.setItemAsync(KV_LAST_PIN, String(Date.now()), DEVICE_ONLY);
-    // Refresh the canary under the current key whenever the PIN proves who you are.
     if (this.key) await this.writeCanary(this.key);
   }
 
@@ -399,7 +362,6 @@ export class Vault {
   private async loadLockout(): Promise<LockoutState> {
     const raw = await SecureStore.getItemAsync(KV_LOCKOUT, DEVICE_ONLY);
     const parsed = parseLockout(raw);
-    // A corrupted record becomes a real lock, persisted so it actually expires.
     if (raw && JSON.stringify(parsed) !== raw) await this.saveLockout(parsed);
     return parsed;
   }

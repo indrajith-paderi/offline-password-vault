@@ -44,14 +44,14 @@ describe('lockout', () => {
 
   it('counts a guess even if the app dies mid-check', () => {
     let s = INITIAL_LOCKOUT;
-    for (let i = 0; i < 3; i++) s = beginAttempt(s, at(i)); // never resolved
+    for (let i = 0; i < 3; i++) s = beginAttempt(s, at(i));
     expect(attemptsLeft(s, at(10))).toBe(0);
   });
 
   it('is not fooled by moving the wall clock forward on the same boot', () => {
     let s = INITIAL_LOCKOUT;
     for (let i = 0; i < 3; i++) s = wrong(s, at(i));
-    const later = at(2 * H, 2 + 60_000); // wall +2h, monotonic +1 min
+    const later = at(2 * H, 2 + 60_000);
     expect(lockRemainingMs(s, later)).toBeGreaterThan(0);
     expect(() => beginAttempt(s, later)).toThrow();
   });

@@ -1,6 +1,5 @@
 import type { EncryptedRow } from './types';
 
-/** Persistence boundary. Everything that crosses it is already ciphertext (or non-secret metadata). */
 export interface VaultStore {
   getMeta(key: string): Promise<Uint8Array | null>;
   setMeta(entries: Record<string, Uint8Array>): Promise<void>;
@@ -8,7 +7,6 @@ export interface VaultStore {
   getRow(id: string): Promise<EncryptedRow | null>;
   putRow(row: EncryptedRow): Promise<void>;
   deleteRow(id: string): Promise<void>;
-  /** Atomically swap the whole vault: used by restore and by first-time setup. */
   replaceAll(meta: Record<string, Uint8Array>, rows: EncryptedRow[]): Promise<void>;
   wipe(): Promise<void>;
 }

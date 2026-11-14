@@ -23,7 +23,6 @@ export const DEFAULT_GENERATOR: GeneratorOptions = {
   symbols: true,
 };
 
-/** Uniform, unbiased picks (randombytes_uniform) with at least one char from each chosen set. */
 export function generatePassword(opts: GeneratorOptions): string {
   const sets = (Object.keys(SETS) as (keyof typeof SETS)[]).filter((k) => opts[k]).map((k) => SETS[k]);
   if (sets.length === 0) throw new Error('Pick at least one character set');
@@ -33,7 +32,6 @@ export function generatePassword(opts: GeneratorOptions): string {
 
   const chars = sets.map(pick);
   while (chars.length < length) chars.push(pick(all));
-  // Fisher-Yates so the guaranteed chars aren't always up front.
   for (let i = chars.length - 1; i > 0; i--) {
     const j = sodium.randombytes_uniform(i + 1);
     [chars[i], chars[j]] = [chars[j], chars[i]];

@@ -3,19 +3,6 @@ import { open, seal } from '../crypto/aead';
 import { concat, randomBytes, u32be, utf8Encode, wipe } from '../crypto/bytes';
 import { argon2id, KdfParams, KEY_BYTES, SALT_BYTES, VAULT_KDF } from '../crypto/kdf';
 
-/**
- * Envelope encryption:
- *
- *   pinHash = Argon2id(PIN, salt)
- *   KEK     = HMAC-SHA256(hardwareKey, "OV-KEK-v1" || salt || pinHash)   <- inside StrongBox/TEE/SE
- *   header  = AES-GCM(KEK, vaultKey, aad = version || kdf params || salt)
- *   records = AES-GCM(vaultKey, record, aad = record id)
- *
- * A 4-digit PIN has only 10,000 values; Argon2id alone would fall to an offline attacker
- * in hours. Folding in a non-exportable hardware key means guesses can only be made on
- * this phone, through the app's lockout, never on a laptop with a copied database.
- */
-
 export const HEADER_VERSION = 1;
 const KEK_CONTEXT = utf8Encode('OV-KEK-v1');
 const VK_CONTEXT = utf8Encode('OV-VK-v1');
@@ -67,7 +54,6 @@ export async function wrapVaultKey(
   }
 }
 
-/** Throws DecryptError on a wrong PIN (or a tampered header, or a different phone). */
 export async function unwrapVaultKey(pin: string, h: VaultHeader): Promise<Uint8Array> {
   const kek = await deriveKek(pin, h.salt, h.kdf);
   try {
@@ -77,7 +63,6 @@ export async function unwrapVaultKey(pin: string, h: VaultHeader): Promise<Uint8
   }
 }
 
-// Binary header: version(1) | ops(4) | memKiB(4) | salt(16) | wrappedKey(rest)
 export function encodeHeader(h: VaultHeader): Uint8Array {
   return concat(Uint8Array.of(h.version), u32be(h.kdf.ops), u32be(h.kdf.memKiB), h.salt, h.wrappedKey);
 }

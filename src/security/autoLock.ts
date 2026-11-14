@@ -5,10 +5,6 @@ import { clearCopiedSecret } from './clipboard';
 export const AUTO_LOCK_OPTIONS = [30_000, 60_000, 120_000, 300_000] as const;
 export const DEFAULT_AUTO_LOCK_MS = 60_000;
 
-/**
- * Locks when the app goes to the background (immediately) or after `idleMs` with no touches.
- * Returns a callback to wire into the root view's onTouchStart.
- */
 export function useAutoLock(active: boolean, idleMs: number, lock: () => void): () => void {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 

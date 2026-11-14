@@ -39,7 +39,6 @@ export function LockScreen({ vault, blocked, warnings }: { vault: Vault; blocked
     });
   }, [vault, refresh, tryBio]);
 
-  // Tick the lockout countdown.
   useEffect(() => {
     if (lockedForMs <= 0) return;
     const id = setInterval(() => void refresh(), 15_000);
@@ -57,7 +56,6 @@ export function LockScreen({ vault, blocked, warnings }: { vault: Vault; blocked
       if (r.reason === 'wrong-pin' && r.attemptsLeft > 0) {
         setMessage(`Wrong PIN. ${r.attemptsLeft} attempt${r.attemptsLeft === 1 ? '' : 's'} left before a 1-hour lock.`);
       }
-      // Small extra delay on failure, on top of Argon2id.
       await new Promise((res) => setTimeout(res, 800));
     } finally {
       setBusy(false);

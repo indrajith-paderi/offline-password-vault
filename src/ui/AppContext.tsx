@@ -27,7 +27,6 @@ export function useApp(): AppCtx {
   return c;
 }
 
-/** Let the spinner paint before Argon2id hogs the JS thread for a second. */
 export const nextFrame = () => new Promise<void>((r) => setTimeout(r, 50));
 
 export function formatDuration(ms: number): string {

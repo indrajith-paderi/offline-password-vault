@@ -28,10 +28,6 @@ public final class SecureNativeModule: Module {
   public func definition() -> ModuleDefinition {
     Name("SecureNative")
 
-    // ---- Hardware-bound device secret ---------------------------------------------------
-    // Secure Enclave can't do HMAC, so we do ECDH between an SE-resident P-256 key and a
-    // fixed peer key, HKDF the shared secret, then HMAC. The SE key blob is only usable by
-    // this device's enclave; nothing here survives a restore to another phone.
     AsyncFunction("deviceMac") { (data: Data) -> Data in
       let key = try deviceMacKey()
       return Data(HMAC<SHA256>.authenticationCode(for: data, using: key))
@@ -47,8 +43,6 @@ public final class SecureNativeModule: Module {
       }
     }
 
-    // ---- AES-256-GCM via CryptoKit -------------------------------------------------------
-    // Output layout: nonce(12) || ciphertext || tag(16).
     Function("aesGcmEncrypt") { (key: Data, plaintext: Data, aad: Data) -> Data in
       guard key.count == 32 else { throw BadKeyException() }
       let box = try AES.GCM.seal(plaintext, using: SymmetricKey(data: key), nonce: AES.GCM.Nonce(), authenticating: aad)
@@ -66,9 +60,7 @@ public final class SecureNativeModule: Module {
       }
     }
 
-    // ---- Clocks ---------------------------------------------------------------------------
     Function("monotonicMs") { () -> Double in
-      // CLOCK_MONOTONIC on Darwin keeps counting during sleep and ignores wall-clock changes.
       Double(clock_gettime_nsec_np(CLOCK_MONOTONIC)) / 1_000_000
     }
 
@@ -81,8 +73,6 @@ public final class SecureNativeModule: Module {
       return String(cString: buf)
     }
 
-    // ---- Clipboard ------------------------------------------------------------------------
-    // localOnly keeps it off Universal Clipboard (which would beam it to your Mac).
     AsyncFunction("copySensitive") { (text: String, expiresInMs: Double) in
       UIPasteboard.general.setItems(
         [[UTType.plainText.identifier: text]],
@@ -97,7 +87,6 @@ public final class SecureNativeModule: Module {
       UIPasteboard.general.items = []
     }.runOnQueue(.main)
 
-    // ---- Integrity / tamper signals ---------------------------------------------------------
     Function("integrityReport") { () -> [String: Any?] in
       [
         "debuggerAttached": isDebuggerAttached(),
@@ -110,8 +99,6 @@ public final class SecureNativeModule: Module {
   }
 }
 
-// MARK: - Device key
-
 private func deviceMacKey() throws -> SymmetricKey {
   if SecureEnclave.isAvailable {
     let se = try loadOrCreateSecureEnclaveKey()
@@ -119,7 +106,6 @@ private func deviceMacKey() throws -> SymmetricKey {
     let shared = try se.sharedSecretFromKeyAgreement(with: peer)
     return shared.hkdfDerivedSymmetricKey(using: SHA256.self, salt: Data(), sharedInfo: macInfo, outputByteCount: 32)
   }
-  // Simulator / very old hardware: keychain secret, this-device-only.
   if let secret = readKeychainItem(fallbackSecretTag) {
     return SymmetricKey(data: secret)
   }
@@ -154,8 +140,6 @@ private func loadOrCreatePeerPublicKey() throws -> P256.KeyAgreement.PublicKey {
   return pub
 }
 
-// MARK: - Keychain helpers (generic passwords, never synced, this device only)
-
 private func baseQuery(_ tag: String) -> [String: Any] {
   [
     kSecClass as String: kSecClassGenericPassword,
@@ -186,8 +170,6 @@ private func writeKeychainItem(_ tag: String, _ data: Data) throws {
 private func deleteKeychainItem(_ tag: String) {
   SecItemDelete(baseQuery(tag) as CFDictionary)
 }
-
-// MARK: - Integrity heuristics (bypassable; they raise the bar, nothing more)
 
 private func isDebuggerAttached() -> Bool {
   var info = kinfo_proc()

@@ -3,15 +3,6 @@ import { concat, randomBytes, u32be, utf8Decode, utf8Encode, wipe } from '../cry
 import { argon2id, assertSaneKdf, BACKUP_KDF, KdfParams, SALT_BYTES } from '../crypto/kdf';
 import type { Entry } from '../vault/types';
 
-/**
- * vault_backup.enc, fully self-contained (no device keys involved, so any phone can open it):
- *
- *   "OVBK" | ver u8 | kdf u8 | ops u32 | memKiB u32 | salt[16] | createdAt u64 | appVerLen u8 | appVer
- *   nonce[12] | AES-256-GCM(Argon2id(backupPassword, salt), JSON payload) | tag[16]
- *
- * The whole header is the AAD, so editing the date, version or KDF params breaks the tag.
- */
-
 const MAGIC = utf8Encode('OVBK');
 export const BACKUP_VERSION = 1;
 const KDF_ARGON2ID13 = 2;
@@ -115,13 +106,11 @@ function parse(file: Uint8Array): Parsed {
   };
 }
 
-/** Readable without the password: date and version, so you can pick the right file. */
 export function readBackupInfo(file: Uint8Array): BackupInfo {
   const { version, createdAt, appVersion, kdf } = parse(file);
   return { version, createdAt, appVersion, kdf };
 }
 
-/** Decrypts and fully validates. Nothing touches the live vault until this returns. */
 export function openBackup(file: Uint8Array, password: string): { info: BackupInfo; entries: Entry[] } {
   const p = parse(file);
   const pw = utf8Encode(password);

@@ -47,9 +47,6 @@ class SecureNativeModule : Module() {
   override fun definition() = ModuleDefinition {
     Name("SecureNative")
 
-    // ---- Hardware-bound device secret -------------------------------------------------
-    // HMAC-SHA256 with a non-exportable key living in StrongBox/TEE. The key never leaves
-    // secure hardware, so a copy of the app's files is useless on any other device.
     AsyncFunction("deviceMac") { data: ByteArray ->
       try {
         val mac = Mac.getInstance("HmacSHA256")
@@ -81,8 +78,6 @@ class SecureNativeModule : Module() {
       if (ks.containsAlias(DEVICE_KEY_ALIAS)) ks.deleteEntry(DEVICE_KEY_ALIAS)
     }
 
-    // ---- AES-256-GCM via the platform JCA provider ------------------------------------
-    // Output layout: nonce(12) || ciphertext || tag(16). A fresh random nonce every call.
     Function("aesGcmEncrypt") { key: ByteArray, plaintext: ByteArray, aad: ByteArray ->
       try {
         if (key.size != 32) throw BadKeyException()
@@ -118,19 +113,16 @@ class SecureNativeModule : Module() {
       }
     }
 
-    // ---- Clocks (for lockout that survives wall-clock games) --------------------------
     Function("monotonicMs") { SystemClock.elapsedRealtime().toDouble() }
 
     Function("bootId") {
       Settings.Global.getInt(context.contentResolver, Settings.Global.BOOT_COUNT, -1).toString()
     }
 
-    // ---- Clipboard ---------------------------------------------------------------------
     AsyncFunction("copySensitive") { text: String, _expiresInMs: Double ->
       val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
       val clip = ClipData.newPlainText("", text)
       clip.description.extras = PersistableBundle().apply {
-        // Hides the preview in the Android 13+ clipboard overlay and keyboard suggestions.
         val key = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
           ClipDescription.EXTRA_IS_SENSITIVE
         } else {
@@ -146,7 +138,6 @@ class SecureNativeModule : Module() {
       cm.clearPrimaryClip()
     }.runOnQueue(Queues.MAIN)
 
-    // ---- Integrity / tamper signals ----------------------------------------------------
     Function("integrityReport") {
       val appInfo = context.applicationInfo
       mapOf(
@@ -163,7 +154,6 @@ class SecureNativeModule : Module() {
     val ks = KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
     (ks.getKey(DEVICE_KEY_ALIAS, null) as? SecretKey)?.let { return it }
 
-    // Prefer StrongBox, then TEE. Keys are only usable while the device is unlocked.
     val attempts = listOf(true to true, false to true, false to false)
     var lastError: Exception? = null
     for ((strongBox, unlockedOnly) in attempts) {
@@ -202,7 +192,6 @@ class SecureNativeModule : Module() {
     }
   }.getOrNull()
 
-  // Heuristics only: a determined root user can hide from all of these.
   private fun looksRooted(): Boolean {
     val suPaths = listOf(
       "/system/bin/su", "/system/xbin/su", "/sbin/su", "/su/bin/su", "/data/local/su",

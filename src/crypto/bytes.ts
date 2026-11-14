@@ -1,6 +1,5 @@
 import sodium from 'react-native-libsodium';
 
-/** Overwrite a buffer in place. JS strings can't be wiped, so secrets live in Uint8Arrays. */
 export function wipe(...bufs: (Uint8Array | null | undefined)[]): void {
   for (const b of bufs) b?.fill(0);
 }

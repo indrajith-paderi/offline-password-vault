@@ -15,7 +15,6 @@ export function EntryScreen({ id }: { id: string }) {
 
   useEffect(() => {
     void vault.get(id).then(setEntry);
-    // Drop the decrypted copy from state as soon as we leave.
     return () => setEntry(null);
   }, [vault, id]);
 
@@ -25,7 +24,6 @@ export function EntryScreen({ id }: { id: string }) {
     return () => clearTimeout(h);
   }, [toast]);
 
-  // Re-hide the password after 20s of being shown.
   useEffect(() => {
     if (!reveal) return;
     const h = setTimeout(() => setReveal(false), 20_000);

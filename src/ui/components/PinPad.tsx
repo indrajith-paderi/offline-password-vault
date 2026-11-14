@@ -2,10 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../theme';
 
-/**
- * In-app keypad instead of the system keyboard: no third-party keyboard ever sees the PIN,
- * and there's no text field for autofill or accessibility services to scrape.
- */
 export function PinPad({
   onComplete,
   disabled,
