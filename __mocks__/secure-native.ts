@@ -28,6 +28,7 @@ function fresh(): State {
     bootCount: 1,
     clipboard: null,
     integrity: {
+      platform: 'android',
       debuggerAttached: false,
       debuggable: false,
       compromised: false,

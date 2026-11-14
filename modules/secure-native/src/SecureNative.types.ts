@@ -1,4 +1,5 @@
 export type IntegrityReport = {
+  platform: 'android' | 'ios';
   debuggerAttached: boolean;
   debuggable: boolean;
   compromised: boolean;

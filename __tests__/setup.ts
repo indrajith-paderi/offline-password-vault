@@ -1,4 +1,5 @@
 import sodium from 'react-native-libsodium';
+import { constantsControl } from '../__mocks__/expo-constants';
 import { secureStoreControl } from '../__mocks__/expo-secure-store';
 import { nativeControl } from '../__mocks__/secure-native';
 
@@ -8,7 +9,11 @@ beforeAll(async () => {
   await sodium.ready;
 });
 
+(globalThis as { __DEV__?: boolean }).__DEV__ = false;
+
 beforeEach(() => {
+  (globalThis as { __DEV__?: boolean }).__DEV__ = false;
+  constantsControl.reset();
   nativeControl.reset();
   secureStoreControl.reset();
   for (const m of CONSOLE_METHODS) {

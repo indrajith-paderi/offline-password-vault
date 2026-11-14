@@ -141,6 +141,7 @@ class SecureNativeModule : Module() {
     Function("integrityReport") {
       val appInfo = context.applicationInfo
       mapOf(
+        "platform" to "android",
         "debuggerAttached" to (Debug.isDebuggerConnected() || Debug.waitingForDebugger()),
         "debuggable" to ((appInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0),
         "compromised" to looksRooted(),

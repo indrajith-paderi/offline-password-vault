@@ -15,7 +15,7 @@ export function checkIntegrity(): IntegrityVerdict {
     if (r.debuggerAttached) blocked = 'A debugger is attached to the app.';
     if (r.debuggable) blocked = 'This build is debuggable. Install a release build.';
     const expected = Constants.expoConfig?.extra?.signingCertSha256 as string | undefined;
-    if (expected && r.signingCertSha256 && r.signingCertSha256 !== expected.toUpperCase()) {
+    if (r.platform === 'android' && expected && r.signingCertSha256 !== expected.trim().toUpperCase()) {
       blocked = 'This copy of the app has been modified or re-signed.';
     }
   }

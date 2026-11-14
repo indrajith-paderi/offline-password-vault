@@ -89,6 +89,7 @@ public final class SecureNativeModule: Module {
 
     Function("integrityReport") { () -> [String: Any?] in
       [
+        "platform": "ios",
         "debuggerAttached": isDebuggerAttached(),
         "debuggable": false,
         "compromised": looksJailbroken(),
