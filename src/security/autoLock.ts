@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { AppState } from 'react-native';
 import { clearCopiedSecret } from './clipboard';
-import { IdleLocker } from './idleLocker';
+import { DEFAULT_AUTO_LOCK_MS, IdleLocker } from './idleLocker';
 
-export const AUTO_LOCK_OPTIONS = [30_000, 60_000, 120_000, 300_000] as const;
-export const DEFAULT_AUTO_LOCK_MS = 60_000;
+export { AUTO_LOCK_OPTIONS, DEFAULT_AUTO_LOCK_MS } from './idleLocker';
 
 export function useAutoLock(active: boolean, idleMs: number, lock: () => void): () => void {
   const lockRef = useRef(lock);

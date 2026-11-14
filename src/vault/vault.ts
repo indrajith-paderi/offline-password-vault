@@ -3,6 +3,7 @@ import SecureNative from '../../modules/secure-native';
 import { DecryptError, open, seal } from '../crypto/aead';
 import { fromBase64, randomBytes, toBase64, utf8Decode, utf8Encode, wipe } from '../crypto/bytes';
 import { KdfParams, VAULT_KDF } from '../crypto/kdf';
+import { AUTO_LOCK_OPTIONS, DEFAULT_AUTO_LOCK_MS } from '../security/idleLocker';
 import {
   decodeHeader,
   encodeHeader,
@@ -50,7 +51,12 @@ export type EntryInput = {
 export type ListedEntry = EntrySummary & { id: string };
 
 export type Settings = { autoLockMs: number };
-const DEFAULT_SETTINGS: Settings = { autoLockMs: 60_000 };
+const DEFAULT_SETTINGS: Settings = { autoLockMs: DEFAULT_AUTO_LOCK_MS };
+
+function sanitizeSettings(v: unknown): Settings {
+  const ms = (v as Partial<Settings> | null)?.autoLockMs;
+  return { autoLockMs: (AUTO_LOCK_OPTIONS as readonly number[]).includes(ms as number) ? (ms as number) : DEFAULT_SETTINGS.autoLockMs };
+}
 
 const summaryAad = (id: string) => `OV-S-v1|${id}`;
 const secretAad = (id: string) => `OV-X-v1|${id}`;
@@ -300,14 +306,14 @@ export class Vault {
     const raw = await this.store.getMeta('settings');
     if (!raw) return DEFAULT_SETTINGS;
     try {
-      return { ...DEFAULT_SETTINGS, ...JSON.parse(utf8Decode(raw)) };
+      return sanitizeSettings(JSON.parse(utf8Decode(raw)));
     } catch {
       return DEFAULT_SETTINGS;
     }
   }
 
   async saveSettings(s: Settings): Promise<void> {
-    await this.store.setMeta({ settings: utf8Encode(JSON.stringify(s)) });
+    await this.store.setMeta({ settings: utf8Encode(JSON.stringify(sanitizeSettings(s))) });
   }
 
   private setKey(k: Uint8Array) {

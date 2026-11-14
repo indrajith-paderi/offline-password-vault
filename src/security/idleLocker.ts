@@ -1,3 +1,6 @@
+export const AUTO_LOCK_OPTIONS = [30_000, 60_000, 120_000, 300_000] as const;
+export const DEFAULT_AUTO_LOCK_MS = 60_000;
+
 export class IdleLocker {
   private timer: ReturnType<typeof setTimeout> | null = null;
   private active = false;
