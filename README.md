@@ -1,6 +1,6 @@
-# Offline Vault
+# Keystill
 
-Offline password manager for Android and iOS. No backend, no accounts, no network permission.
+Offline password manager for Android and iOS. Your keys, kept still. No backend, no accounts, no network permission.
 
 ## Features
 

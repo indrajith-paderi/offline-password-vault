@@ -4,7 +4,7 @@ Last updated: 2026-11-14
 
 ## Summary
 
-Offline Vault doesn't collect, transmit or share any data.
+Keystill doesn't collect, transmit or share any data.
 
 ## Data stored
 
