@@ -11,35 +11,18 @@ import android.os.Debug
 import android.os.PersistableBundle
 import android.os.SystemClock
 import android.provider.Settings
-import android.security.keystore.KeyGenParameterSpec
-import android.security.keystore.KeyInfo
-import android.security.keystore.KeyProperties
 import expo.modules.kotlin.exception.CodedException
 import expo.modules.kotlin.functions.Queues
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
 import java.io.File
-import java.security.KeyStore
 import java.security.MessageDigest
-import java.security.SecureRandom
-import javax.crypto.Cipher
-import javax.crypto.KeyGenerator
-import javax.crypto.Mac
-import javax.crypto.SecretKey
-import javax.crypto.SecretKeyFactory
-import javax.crypto.spec.GCMParameterSpec
-import javax.crypto.spec.SecretKeySpec
-
-private const val DEVICE_KEY_ALIAS = "offline_vault_device_mac_v1"
-private const val ANDROID_KEYSTORE = "AndroidKeyStore"
-private const val GCM_NONCE_BYTES = 12
-private const val GCM_TAG_BITS = 128
 
 class DecryptFailedException : CodedException("ERR_DECRYPT", "Authentication failed", null)
 class BadKeyException : CodedException("ERR_KEY", "Key must be 32 bytes", null)
 
 class SecureNativeModule : Module() {
-  private val random = SecureRandom()
+  private val deviceKey = DeviceKey()
 
   private val context: Context
     get() = appContext.reactContext ?: throw IllegalStateException("No React context")
@@ -49,43 +32,21 @@ class SecureNativeModule : Module() {
 
     AsyncFunction("deviceMac") { data: ByteArray ->
       try {
-        val mac = Mac.getInstance("HmacSHA256")
-        mac.init(getOrCreateDeviceKey())
-        mac.doFinal(data)
+        deviceKey.mac(data)
       } finally {
         data.fill(0)
       }
     }
 
-    AsyncFunction("deviceKeySecurityLevel") {
-      val key = getOrCreateDeviceKey()
-      val info = SecretKeyFactory.getInstance(key.algorithm, ANDROID_KEYSTORE)
-        .getKeySpec(key, KeyInfo::class.java) as KeyInfo
-      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        when (info.securityLevel) {
-          KeyProperties.SECURITY_LEVEL_STRONGBOX -> "strongbox"
-          KeyProperties.SECURITY_LEVEL_TRUSTED_ENVIRONMENT -> "tee"
-          else -> "software"
-        }
-      } else {
-        @Suppress("DEPRECATION")
-        if (info.isInsideSecureHardware) "tee" else "software"
-      }
-    }
+    AsyncFunction("deviceKeySecurityLevel") { deviceKey.securityLevel() }
 
-    AsyncFunction("deleteDeviceKey") {
-      val ks = KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
-      if (ks.containsAlias(DEVICE_KEY_ALIAS)) ks.deleteEntry(DEVICE_KEY_ALIAS)
-    }
+    AsyncFunction("deleteDeviceKey") { deviceKey.delete() }
 
     Function("aesGcmEncrypt") { key: ByteArray, plaintext: ByteArray, aad: ByteArray ->
       try {
-        if (key.size != 32) throw BadKeyException()
-        val nonce = ByteArray(GCM_NONCE_BYTES).also { random.nextBytes(it) }
-        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(key, "AES"), GCMParameterSpec(GCM_TAG_BITS, nonce))
-        cipher.updateAAD(aad)
-        nonce + cipher.doFinal(plaintext)
+        AesGcm.seal(key, plaintext, aad)
+      } catch (e: AesGcmKeyException) {
+        throw BadKeyException()
       } finally {
         key.fill(0)
         plaintext.fill(0)
@@ -94,20 +55,11 @@ class SecureNativeModule : Module() {
 
     Function("aesGcmDecrypt") { key: ByteArray, blob: ByteArray, aad: ByteArray ->
       try {
-        if (key.size != 32) throw BadKeyException()
-        if (blob.size < GCM_NONCE_BYTES + GCM_TAG_BITS / 8) throw DecryptFailedException()
-        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(
-          Cipher.DECRYPT_MODE,
-          SecretKeySpec(key, "AES"),
-          GCMParameterSpec(GCM_TAG_BITS, blob, 0, GCM_NONCE_BYTES),
-        )
-        cipher.updateAAD(aad)
-        try {
-          cipher.doFinal(blob, GCM_NONCE_BYTES, blob.size - GCM_NONCE_BYTES)
-        } catch (e: javax.crypto.AEADBadTagException) {
-          throw DecryptFailedException()
-        }
+        AesGcm.open(key, blob, aad)
+      } catch (e: AesGcmKeyException) {
+        throw BadKeyException()
+      } catch (e: AesGcmAuthException) {
+        throw DecryptFailedException()
       } finally {
         key.fill(0)
       }
@@ -149,29 +101,6 @@ class SecureNativeModule : Module() {
         "installer" to installerPackage(),
       )
     }
-  }
-
-  private fun getOrCreateDeviceKey(): SecretKey {
-    val ks = KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
-    (ks.getKey(DEVICE_KEY_ALIAS, null) as? SecretKey)?.let { return it }
-
-    val attempts = listOf(true to true, false to true, false to false)
-    var lastError: Exception? = null
-    for ((strongBox, unlockedOnly) in attempts) {
-      try {
-        val spec = KeyGenParameterSpec.Builder(DEVICE_KEY_ALIAS, KeyProperties.PURPOSE_SIGN)
-          .setIsStrongBoxBacked(strongBox)
-          .setUnlockedDeviceRequired(unlockedOnly)
-          .build()
-        val gen = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_HMAC_SHA256, ANDROID_KEYSTORE)
-        gen.init(spec)
-        return gen.generateKey()
-      } catch (e: Exception) {
-        lastError = e
-        runCatching { ks.deleteEntry(DEVICE_KEY_ALIAS) }
-      }
-    }
-    throw lastError ?: IllegalStateException("Could not create device key")
   }
 
   private fun signingCertSha256(): String? = runCatching {
