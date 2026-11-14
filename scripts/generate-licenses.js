@@ -108,7 +108,7 @@ while (queue.length) {
   if (!dir) continue;
   const pkg = JSON.parse(fs.readFileSync(path.join(dir, 'package.json'), 'utf8'));
   const key = `${pkg.name}@${pkg.version}`;
-  if (seen.has(key) || pkg.private) continue;
+  if (seen.has(key) || pkg.private || pkg.os || pkg.cpu) continue;
   const license = licenseName(pkg);
   seen.set(key, {
     name: pkg.name,
