@@ -131,12 +131,14 @@ jobs:
           script: |
             cd android && ./gradlew :secure-native:connectedDebugAndroidTest --no-daemon && cd ..
             adb install -r app-release.apk
-            maestro test .maestro --format junit --output maestro-report.xml
+            maestro test .maestro --format junit --output maestro-report.xml --debug-output maestro-debug
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: maestro-report
-          path: maestro-report.xml
+          path: |
+            maestro-report.xml
+            maestro-debug
           retention-days: 14
 
   ios:
