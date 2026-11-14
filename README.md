@@ -25,6 +25,29 @@ npm test
 npm run typecheck
 ```
 
+## Testing
+
+| Command | What it runs |
+| --- | --- |
+| `npm test` | Jest: unit, property-based, fuzz, golden-file and store contract tests |
+| `npm run test:ci` | Same, with coverage thresholds enforced |
+| `npm run mutation` | Stryker mutation testing (slow) |
+| `npm run vectors` | Regenerate Kotlin/Swift AES-GCM vectors from `modules/secure-native/test-vectors` |
+| `swift test` in `modules/secure-native/ios` | CryptoKit AES-GCM against the shared vectors (macOS) |
+| `./gradlew :secure-native:testDebugUnitTest` in `android/` | JCA AES-GCM against the shared vectors |
+| `./gradlew :secure-native:connectedDebugAndroidTest` in `android/` | Keystore device key on an emulator or phone |
+| `maestro test .maestro` | End-to-end flows against an installed release build |
+
+Mocks live in `__mocks__/` and model the real native contracts: device-only secure storage, biometric cancel and invalidation, hardware key failures, and SQLite via `node:sqlite` with disk-failure injection. Tests run in random order and fail on any console output.
+
+Regenerate the backup golden file only when the format version changes:
+
+```bash
+UPDATE_FIXTURES=1 npx jest backupFixture
+```
+
+CI runs all of the above. Mutation testing runs weekly.
+
 ## Development build
 
 Metro needs network access, so dev builds keep `INTERNET`:
@@ -53,6 +76,14 @@ After changing dependencies, regenerate the license list:
 
 ```bash
 npm run licenses
+```
+
+## Assets
+
+Icon and splash sources are in `assets/brand`. Regenerate the PNGs with:
+
+```bash
+npm run assets
 ```
 
 ## Moving to a new phone
