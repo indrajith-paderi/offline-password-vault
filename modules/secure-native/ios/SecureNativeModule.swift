@@ -44,17 +44,18 @@ public final class SecureNativeModule: Module {
     }
 
     Function("aesGcmEncrypt") { (key: Data, plaintext: Data, aad: Data) -> Data in
-      guard key.count == 32 else { throw BadKeyException() }
-      let box = try AES.GCM.seal(plaintext, using: SymmetricKey(data: key), nonce: AES.GCM.Nonce(), authenticating: aad)
-      guard let combined = box.combined else { throw BadKeyException() }
-      return combined
+      do {
+        return try AesGcm.seal(key: key, plaintext: plaintext, aad: aad)
+      } catch AesGcmError.badKey {
+        throw BadKeyException()
+      }
     }
 
     Function("aesGcmDecrypt") { (key: Data, blob: Data, aad: Data) -> Data in
-      guard key.count == 32 else { throw BadKeyException() }
       do {
-        let box = try AES.GCM.SealedBox(combined: blob)
-        return try AES.GCM.open(box, using: SymmetricKey(data: key), authenticating: aad)
+        return try AesGcm.open(key: key, blob: blob, aad: aad)
+      } catch AesGcmError.badKey {
+        throw BadKeyException()
       } catch {
         throw DecryptFailedException()
       }

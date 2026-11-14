@@ -11,7 +11,8 @@ Pod::Spec.new do |s|
   s.source         = { git: '' }
   s.static_framework = true
   s.dependency 'ExpoModulesCore'
-  s.source_files = '**/*.{h,m,swift}'
+  s.source_files = ['SecureNativeModule.swift', 'Sources/**/*.swift']
+  s.exclude_files = ['Tests/**/*', 'Package.swift']
   s.pod_target_xcconfig = {
     'DEFINES_MODULE' => 'YES',
     'SWIFT_COMPILATION_MODE' => 'wholemodule'
