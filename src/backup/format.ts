@@ -1,4 +1,4 @@
-import { DecryptError, open, seal } from '../crypto/aead';
+import { open, seal } from '../crypto/aead';
 import { concat, randomBytes, u32be, utf8Decode, utf8Encode, wipe } from '../crypto/bytes';
 import { argon2id, assertSaneKdf, BACKUP_KDF, KdfParams, SALT_BYTES } from '../crypto/kdf';
 import type { Entry } from '../vault/types';
@@ -118,9 +118,8 @@ export function openBackup(file: Uint8Array, password: string): { info: BackupIn
   let plain: Uint8Array;
   try {
     plain = open(key, p.body, p.header);
-  } catch (e) {
-    if (e instanceof DecryptError) throw new WrongBackupPasswordError();
-    throw e;
+  } catch {
+    throw new WrongBackupPasswordError();
   } finally {
     wipe(pw, key);
   }
