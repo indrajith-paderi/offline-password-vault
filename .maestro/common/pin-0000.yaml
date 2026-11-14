@@ -1,0 +1,7 @@
+appId: dev.offlinevault.app
+---
+- repeat:
+    times: 4
+    commands:
+      - tapOn:
+          id: pin-key-0

@@ -1,0 +1,17 @@
+appId: dev.offlinevault.app
+---
+- tapOn:
+    id: add-entry
+- tapOn:
+    id: field-title
+- inputText: GitHub
+- tapOn:
+    id: field-username
+- inputText: octo@example.com
+- tapOn:
+    id: field-password
+- inputText: s3cret-Pass!
+- hideKeyboard
+- tapOn:
+    id: save-entry
+- assertVisible: GitHub

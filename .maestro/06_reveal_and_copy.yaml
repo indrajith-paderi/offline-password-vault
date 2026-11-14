@@ -1,0 +1,13 @@
+appId: dev.offlinevault.app
+name: Password stays masked until revealed, copy confirms auto-clear
+---
+- runFlow: common/create-vault.yaml
+- runFlow: common/add-entry.yaml
+- tapOn: GitHub
+- assertNotVisible: s3cret-Pass!
+- tapOn:
+    id: toggle-password
+- assertVisible: s3cret-Pass!
+- tapOn:
+    id: copy-password
+- assertVisible: .*copied. Clipboard clears in 30s.*

@@ -1,0 +1,10 @@
+appId: dev.offlinevault.app
+name: Create a vault and add an entry
+tags:
+  - smoke
+---
+- runFlow: common/create-vault.yaml
+- assertVisible: No passwords yet. Add your first one.
+- runFlow: common/add-entry.yaml
+- assertVisible: octo@example.com
+- assertNotVisible: s3cret-Pass!

@@ -1,0 +1,12 @@
+appId: dev.offlinevault.app
+name: Leaving the app locks the vault
+---
+- runFlow: common/create-vault.yaml
+- runFlow: common/add-entry.yaml
+- pressKey: Home
+- launchApp:
+    stopApp: false
+- extendedWaitUntil:
+    visible: Enter your 4-digit PIN
+    timeout: 10000
+- assertNotVisible: GitHub

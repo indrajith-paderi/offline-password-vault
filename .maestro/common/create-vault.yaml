@@ -1,0 +1,17 @@
+appId: dev.offlinevault.app
+---
+- launchApp:
+    clearState: true
+    clearKeychain: true
+- extendedWaitUntil:
+    visible:
+      id: create-vault
+    timeout: 20000
+- tapOn:
+    id: create-vault
+- runFlow: pin-1357.yaml
+- runFlow: pin-1357.yaml
+- extendedWaitUntil:
+    visible:
+      id: add-entry
+    timeout: 30000

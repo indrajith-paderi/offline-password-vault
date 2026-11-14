@@ -1,0 +1,10 @@
+appId: dev.offlinevault.app
+---
+- tapOn:
+    id: pin-key-1
+- tapOn:
+    id: pin-key-3
+- tapOn:
+    id: pin-key-5
+- tapOn:
+    id: pin-key-7

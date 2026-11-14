@@ -1,0 +1,20 @@
+appId: dev.offlinevault.app
+name: Three wrong PINs lock the vault for an hour
+---
+- runFlow: common/create-vault.yaml
+- runFlow: common/relaunch-locked.yaml
+- repeat:
+    times: 3
+    commands:
+      - runFlow: common/pin-0000.yaml
+      - waitForAnimationToEnd:
+          timeout: 15000
+- extendedWaitUntil:
+    visible: Too many wrong PINs.
+    timeout: 20000
+- assertVisible: .*Try again in about.*
+- runFlow: common/relaunch-locked.yaml
+- assertVisible: Too many wrong PINs.
+- runFlow: common/pin-1357.yaml
+- assertNotVisible:
+    id: add-entry

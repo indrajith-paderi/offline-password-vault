@@ -1,0 +1,11 @@
+appId: dev.offlinevault.app
+name: Idle timeout locks the vault
+---
+- runFlow: common/create-vault.yaml
+- tapOn:
+    id: open-settings
+- tapOn:
+    id: autolock-30000
+- extendedWaitUntil:
+    visible: Enter your 4-digit PIN
+    timeout: 45000
