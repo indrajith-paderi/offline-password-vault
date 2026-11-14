@@ -1,0 +1,101 @@
+/**
+ * Locks the Android manifest down for an offline vault:
+ *  - strips every network permission (the OS then refuses to open sockets for us)
+ *  - disables cloud backup AND device-to-device transfer of app data
+ *  - forbids cleartext traffic, just in case something sneaks a socket in
+ *
+ * Dev builds need INTERNET to talk to Metro, so `VAULT_DEV_NETWORK=1 npx expo prebuild`
+ * keeps it. Never ship a build made that way.
+ */
+const fs = require('fs');
+const path = require('path');
+const { withAndroidManifest, withDangerousMod, AndroidConfig } = require('expo/config-plugins');
+
+const NETWORK_PERMISSIONS = [
+  'android.permission.INTERNET',
+  'android.permission.ACCESS_NETWORK_STATE',
+  'android.permission.ACCESS_WIFI_STATE',
+  'android.permission.CHANGE_NETWORK_STATE',
+  'android.permission.READ_EXTERNAL_STORAGE',
+  'android.permission.WRITE_EXTERNAL_STORAGE',
+  'android.permission.SYSTEM_ALERT_WINDOW',
+];
+
+const DATA_EXTRACTION_RULES = `<?xml version="1.0" encoding="utf-8"?>
+<data-extraction-rules>
+  <cloud-backup>
+    <exclude domain="root" path="." />
+    <exclude domain="file" path="." />
+    <exclude domain="database" path="." />
+    <exclude domain="sharedpref" path="." />
+    <exclude domain="external" path="." />
+  </cloud-backup>
+  <device-transfer>
+    <exclude domain="root" path="." />
+    <exclude domain="file" path="." />
+    <exclude domain="database" path="." />
+    <exclude domain="sharedpref" path="." />
+    <exclude domain="external" path="." />
+  </device-transfer>
+</data-extraction-rules>
+`;
+
+const FULL_BACKUP_CONTENT = `<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+  <exclude domain="root" path="." />
+  <exclude domain="file" path="." />
+  <exclude domain="database" path="." />
+  <exclude domain="sharedpref" path="." />
+  <exclude domain="external" path="." />
+</full-backup-content>
+`;
+
+function withManifestHardening(config) {
+  return withAndroidManifest(config, (cfg) => {
+    const manifest = cfg.modResults.manifest;
+    manifest.$['xmlns:tools'] = 'http://schemas.android.com/tools';
+
+    const keepNetwork = process.env.VAULT_DEV_NETWORK === '1';
+    const blocked = keepNetwork
+      ? NETWORK_PERMISSIONS.filter((p) => p !== 'android.permission.INTERNET')
+      : NETWORK_PERMISSIONS;
+
+    const existing = (manifest['uses-permission'] || []).filter(
+      (p) => !blocked.includes(p.$['android:name']),
+    );
+    // tools:node="remove" also strips permissions merged in from libraries.
+    manifest['uses-permission'] = [
+      ...existing,
+      ...blocked.map((name) => ({ $: { 'android:name': name, 'tools:node': 'remove' } })),
+    ];
+
+    const app = AndroidConfig.Manifest.getMainApplicationOrThrow(cfg.modResults);
+    app.$['android:allowBackup'] = 'false';
+    app.$['android:fullBackupContent'] = '@xml/vault_full_backup_content';
+    app.$['android:dataExtractionRules'] = '@xml/vault_data_extraction_rules';
+    app.$['android:usesCleartextTraffic'] = 'false';
+    const toolsReplace = new Set((app.$['tools:replace'] || '').split(',').filter(Boolean));
+    ['android:allowBackup', 'android:fullBackupContent', 'android:dataExtractionRules'].forEach(
+      (a) => toolsReplace.add(a),
+    );
+    app.$['tools:replace'] = [...toolsReplace].join(',');
+    return cfg;
+  });
+}
+
+function withBackupRuleFiles(config) {
+  return withDangerousMod(config, [
+    'android',
+    async (cfg) => {
+      const xmlDir = path.join(cfg.modRequest.platformProjectRoot, 'app/src/main/res/xml');
+      fs.mkdirSync(xmlDir, { recursive: true });
+      fs.writeFileSync(path.join(xmlDir, 'vault_data_extraction_rules.xml'), DATA_EXTRACTION_RULES);
+      fs.writeFileSync(path.join(xmlDir, 'vault_full_backup_content.xml'), FULL_BACKUP_CONTENT);
+      return cfg;
+    },
+  ]);
+}
+
+module.exports = function withHardenedAndroid(config) {
+  return withBackupRuleFiles(withManifestHardening(config));
+};
