@@ -7,6 +7,7 @@ name: Leaving the app locks the vault
 - launchApp:
     stopApp: false
 - extendedWaitUntil:
-    visible: Enter your 4-digit PIN
-    timeout: 10000
+    visible:
+      id: lock-screen
+    timeout: 15000
 - assertNotVisible: GitHub

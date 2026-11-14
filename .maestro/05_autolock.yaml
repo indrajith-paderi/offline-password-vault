@@ -7,5 +7,6 @@ name: Idle timeout locks the vault
 - tapOn:
     id: autolock-30000
 - extendedWaitUntil:
-    visible: Enter your 4-digit PIN
+    visible:
+      id: lock-screen
     timeout: 45000

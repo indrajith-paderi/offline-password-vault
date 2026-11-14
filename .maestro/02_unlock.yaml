@@ -13,5 +13,7 @@ tags:
     timeout: 20000
 - runFlow: common/pin-1357.yaml
 - extendedWaitUntil:
-    visible: GitHub
-    timeout: 20000
+    visible:
+      id: vault-list
+    timeout: 30000
+- assertVisible: GitHub

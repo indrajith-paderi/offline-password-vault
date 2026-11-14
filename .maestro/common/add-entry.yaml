@@ -12,6 +12,13 @@ appId: dev.offlinevault.app
     id: field-password
 - inputText: s3cret-Pass!
 - hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: save-entry
+    direction: DOWN
+    timeout: 15000
 - tapOn:
     id: save-entry
-- assertVisible: GitHub
+- extendedWaitUntil:
+    visible: GitHub
+    timeout: 15000

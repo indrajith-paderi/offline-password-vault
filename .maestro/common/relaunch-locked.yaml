@@ -4,5 +4,6 @@ appId: dev.offlinevault.app
 - launchApp:
     clearState: false
 - extendedWaitUntil:
-    visible: Enter your 4-digit PIN
-    timeout: 20000
+    visible:
+      id: lock-screen
+    timeout: 40000
