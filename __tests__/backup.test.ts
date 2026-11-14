@@ -1,5 +1,5 @@
-import { __test as device } from '../__mocks__/secure-native';
-import { __store as kv } from '../__mocks__/expo-secure-store';
+import { secureStoreControl } from '../__mocks__/expo-secure-store';
+import { nativeControl } from '../__mocks__/secure-native';
 import {
   BackupFormatError,
   createBackup,
@@ -67,16 +67,14 @@ describe('backup format', () => {
 
 describe('phone migration', () => {
   it('restores on a new phone with new device keys and a new PIN', async () => {
-    kv.clear();
-    device.resetDevice();
     const clock = () => ({ wall: Date.now(), mono: 1, boot: 'b' });
     const oldPhone = new Vault(new MemoryStore(), clock, FAST);
     await oldPhone.create('1357');
     await oldPhone.save({ title: 'Bank', username: 'u', url: '', password: 'p@ss', notes: '' });
     const file = createBackup(await oldPhone.exportAll(), PW, { appVersion: '1', kdf: FAST });
 
-    kv.clear();
-    device.resetDevice();
+    secureStoreControl.wipe();
+    nativeControl.newDevice();
     const { entries: restored } = openBackup(file, PW);
     const newPhone = new Vault(new MemoryStore(), clock, FAST);
     await newPhone.create('2468', restored);
