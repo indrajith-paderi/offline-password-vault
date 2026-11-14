@@ -125,8 +125,13 @@ export function openBackup(file: Uint8Array, password: string): { info: BackupIn
     wipe(pw, key);
   }
   try {
-    const json = JSON.parse(utf8Decode(plain));
-    if (!json || json.v !== 1 || !Array.isArray(json.entries)) {
+    let json: { v?: unknown; entries?: unknown } | null;
+    try {
+      json = JSON.parse(utf8Decode(plain));
+    } catch {
+      throw new BackupFormatError('Backup contents are malformed');
+    }
+    if (!json || typeof json !== 'object' || json.v !== 1 || !Array.isArray(json.entries)) {
       throw new BackupFormatError('Backup contents are malformed');
     }
     const entries = (json.entries as unknown[]).map(validateEntry);
