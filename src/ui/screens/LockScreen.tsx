@@ -84,7 +84,7 @@ export function LockScreen({ vault, blocked, warnings }: { vault: Vault; blocked
   const locked = lockedForMs > 0;
 
   return (
-    <Screen>
+    <Screen testID="lock-screen">
       <View style={{ alignItems: 'center', gap: 8, marginTop: 24, marginBottom: 16 }}>
         <AppMark size={64} />
         <H1>Keystill</H1>

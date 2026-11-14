@@ -28,6 +28,7 @@ export function ListScreen() {
 
   return (
     <Screen
+      testID="vault-list"
       title="Vault"
       scroll={false}
       right={

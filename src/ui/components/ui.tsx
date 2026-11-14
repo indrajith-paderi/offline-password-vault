@@ -19,12 +19,14 @@ export function Screen({
   right,
   children,
   scroll = true,
+  testID,
 }: {
   title?: string;
   onBack?: () => void;
   right?: ReactNode;
   children: ReactNode;
   scroll?: boolean;
+  testID?: string;
 }) {
   const t = useTheme();
   const body = scroll ? (
@@ -35,7 +37,7 @@ export function Screen({
     <View style={[styles.body, { flex: 1 }]}>{children}</View>
   );
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }}>
+    <SafeAreaView testID={testID} style={{ flex: 1, backgroundColor: t.bg }}>
       {(title || onBack || right) && (
         <View style={[styles.header, { borderBottomColor: t.border }]}>
           {onBack ? (
