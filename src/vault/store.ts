@@ -11,30 +11,33 @@ export interface VaultStore {
   wipe(): Promise<void>;
 }
 
+const copyRow = (r: EncryptedRow): EncryptedRow => ({ id: r.id, summary: r.summary.slice(), secret: r.secret.slice() });
+
 export class MemoryStore implements VaultStore {
   meta = new Map<string, Uint8Array>();
   rows = new Map<string, EncryptedRow>();
   async getMeta(k: string) {
-    return this.meta.get(k) ?? null;
+    return this.meta.get(k)?.slice() ?? null;
   }
   async setMeta(e: Record<string, Uint8Array>) {
-    for (const [k, v] of Object.entries(e)) this.meta.set(k, v);
+    for (const [k, v] of Object.entries(e)) this.meta.set(k, v.slice());
   }
   async listRows() {
-    return [...this.rows.values()];
+    return [...this.rows.values()].map(copyRow);
   }
   async getRow(id: string) {
-    return this.rows.get(id) ?? null;
+    const r = this.rows.get(id);
+    return r ? copyRow(r) : null;
   }
   async putRow(r: EncryptedRow) {
-    this.rows.set(r.id, r);
+    this.rows.set(r.id, copyRow(r));
   }
   async deleteRow(id: string) {
     this.rows.delete(id);
   }
   async replaceAll(meta: Record<string, Uint8Array>, rows: EncryptedRow[]) {
-    this.meta = new Map(Object.entries(meta));
-    this.rows = new Map(rows.map((r) => [r.id, r]));
+    this.meta = new Map(Object.entries(meta).map(([k, v]) => [k, v.slice()]));
+    this.rows = new Map(rows.map((r) => [r.id, copyRow(r)]));
   }
   async wipe() {
     this.meta.clear();
