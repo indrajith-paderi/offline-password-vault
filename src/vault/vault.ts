@@ -50,6 +50,9 @@ export type EntryInput = {
 
 export type ListedEntry = EntrySummary & { id: string };
 
+export type Settings = { autoLockMs: number };
+const DEFAULT_SETTINGS: Settings = { autoLockMs: 60_000 };
+
 const summaryAad = (id: string) => `OV-S-v1|${id}`;
 const secretAad = (id: string) => `OV-X-v1|${id}`;
 
@@ -107,16 +110,24 @@ export class Vault {
    * Fresh vault with a fresh hardware key. Also used after restoring onto a new phone,
    * so the old phone's device keys are never reused.
    */
-  async create(pin: string): Promise<void> {
+  async create(pin: string, initialEntries: Entry[] = []): Promise<void> {
     if (!isValidPin(pin)) throw new Error('PIN must be exactly 4 digits');
     await SecureNative.deleteDeviceKey();
     await SecureStore.deleteItemAsync(KV_BIO_KEY);
     const vaultKey = newVaultKey();
     const header = await wrapVaultKey(pin, vaultKey, this.kdf);
-    await this.store.replaceAll({ [META_HEADER]: encodeHeader(header) }, []);
-    await this.saveLockout(INITIAL_LOCKOUT);
-    this.setKey(vaultKey);
-    await this.markPinUnlock();
+    // Hold the key quietly until everything is written, then announce we're open.
+    this.key = vaultKey;
+    try {
+      const rows = initialEntries.map((e) => this.encryptEntry(e));
+      await this.store.replaceAll({ [META_HEADER]: encodeHeader(header) }, rows);
+      await this.saveLockout(INITIAL_LOCKOUT);
+      await this.markPinUnlock();
+    } catch (e) {
+      this.lock();
+      throw e;
+    }
+    this.emit();
   }
 
   // ---- unlock ----------------------------------------------------------------------------
@@ -294,7 +305,7 @@ export class Vault {
     const rows = entries.map((e) => this.encryptEntry(e));
     if (mode === 'replace') {
       const meta: Record<string, Uint8Array> = {};
-      for (const k of [META_HEADER, 'bio', 'canary']) {
+      for (const k of [META_HEADER, 'bio', 'canary', 'settings']) {
         const v = await this.store.getMeta(k);
         if (v) meta[k] = v;
       }
@@ -314,6 +325,22 @@ export class Vault {
     await SecureStore.deleteItemAsync(KV_LOCKOUT);
     await this.store.wipe();
     this.emit();
+  }
+
+  // ---- settings (not secret, stored in the clear) ----------------------------------------
+
+  async getSettings(): Promise<Settings> {
+    const raw = await this.store.getMeta('settings');
+    if (!raw) return DEFAULT_SETTINGS;
+    try {
+      return { ...DEFAULT_SETTINGS, ...JSON.parse(utf8Decode(raw)) };
+    } catch {
+      return DEFAULT_SETTINGS;
+    }
+  }
+
+  async saveSettings(s: Settings): Promise<void> {
+    await this.store.setMeta({ settings: utf8Encode(JSON.stringify(s)) });
   }
 
   // ---- internals -------------------------------------------------------------------------

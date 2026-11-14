@@ -80,8 +80,7 @@ describe('phone migration', () => {
     device.resetDevice();
     const { entries: restored } = openBackup(file, PW);
     const newPhone = new Vault(new MemoryStore(), clock, FAST);
-    await newPhone.create('2468');
-    await newPhone.importEntries(restored, 'replace');
+    await newPhone.create('2468', restored);
     newPhone.lock();
     expect((await newPhone.unlockWithPin('2468')).ok).toBe(true);
     const [bank] = await newPhone.list();
