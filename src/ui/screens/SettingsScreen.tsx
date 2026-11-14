@@ -106,6 +106,7 @@ export function SettingsScreen() {
         )}
       </Card>
 
+      <Button label="Open source licenses" kind="secondary" onPress={() => go({ name: 'licenses' })} />
       <Button label="Erase vault" kind="danger" onPress={erase} />
     </Screen>
   );

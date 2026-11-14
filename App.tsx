@@ -12,6 +12,7 @@ import { ChangePinScreen } from './src/ui/screens/ChangePinScreen';
 import { EditScreen } from './src/ui/screens/EditScreen';
 import { EntryScreen } from './src/ui/screens/EntryScreen';
 import { ExportScreen } from './src/ui/screens/ExportScreen';
+import { LicensesScreen } from './src/ui/screens/LicensesScreen';
 import { ListScreen } from './src/ui/screens/ListScreen';
 import { LockScreen } from './src/ui/screens/LockScreen';
 import { RestoreScreen } from './src/ui/screens/RestoreScreen';
@@ -102,6 +103,7 @@ export default function App() {
         {r.name === 'export' && <ExportScreen />}
         {r.name === 'restore' && <RestoreScreen />}
         {r.name === 'changePin' && <ChangePinScreen />}
+        {r.name === 'licenses' && <LicensesScreen />}
       </>
     );
   }
