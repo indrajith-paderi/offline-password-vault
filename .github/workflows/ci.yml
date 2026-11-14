@@ -1,0 +1,177 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * 1'
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  js:
+    name: Typecheck, unit tests, coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run test:ci
+      - name: License list is up to date
+        run: |
+          npm run licenses
+          git diff --exit-code src/legal/licenses.json
+      - name: Native test vectors are up to date
+        run: |
+          npm run vectors
+          git diff --exit-code modules/secure-native
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage
+          path: coverage/lcov-report
+          retention-days: 14
+
+  android:
+    name: Android unit tests and release build
+    needs: js
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+      - run: npm ci
+      - name: Prebuild (release, no network permission)
+        run: npx expo prebuild --platform android --no-install --clean
+      - name: Kotlin unit tests
+        working-directory: android
+        run: ./gradlew :secure-native:testDebugUnitTest --no-daemon
+      - name: Release APK
+        working-directory: android
+        run: ./gradlew :app:assembleRelease --no-daemon
+      - name: APK requests no network permissions
+        run: |
+          AAPT2=$(ls "$ANDROID_HOME"/build-tools/*/aapt2 | sort -V | tail -1)
+          "$AAPT2" dump permissions android/app/build/outputs/apk/release/app-release.apk | tee permissions.txt
+          if grep -E "INTERNET|ACCESS_NETWORK_STATE|ACCESS_WIFI_STATE|CHANGE_NETWORK_STATE" permissions.txt; then
+            echo "Release APK requests a network permission" >&2
+            exit 1
+          fi
+      - name: APK disables backups
+        run: |
+          AAPT2=$(ls "$ANDROID_HOME"/build-tools/*/aapt2 | sort -V | tail -1)
+          "$AAPT2" dump xmltree android/app/build/outputs/apk/release/app-release.apk --file AndroidManifest.xml > manifest.txt
+          grep -E 'allowBackup.*=false|allowBackup.*0x0' manifest.txt
+          if grep -E 'debuggable.*(true|0xffffffff)' manifest.txt; then
+            echo "Release APK is debuggable" >&2
+            exit 1
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app-release
+          path: android/app/build/outputs/apk/release/app-release.apk
+          retention-days: 7
+
+  android-device:
+    name: Instrumented and end-to-end tests
+    needs: android
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+      - run: npm ci
+      - run: npx expo prebuild --platform android --no-install --clean
+      - uses: actions/download-artifact@v4
+        with:
+          name: app-release
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Install Maestro
+        run: |
+          curl -fsSL "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          script: |
+            cd android && ./gradlew :secure-native:connectedDebugAndroidTest --no-daemon && cd ..
+            adb install -r app-release.apk
+            maestro test .maestro --format junit --output maestro-report.xml
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: maestro-report
+          path: maestro-report.xml
+          retention-days: 14
+
+  ios:
+    name: Swift crypto tests
+    needs: js
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: swift test
+        working-directory: modules/secure-native/ios
+        run: swift test
+
+  mutation:
+    name: Mutation testing
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    needs: js
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - uses: actions/cache@v4
+        with:
+          path: reports/stryker-incremental.json
+          key: stryker-${{ github.sha }}
+          restore-keys: stryker-
+      - run: npm run mutation
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mutation-report
+          path: reports/mutation
+          retention-days: 30
