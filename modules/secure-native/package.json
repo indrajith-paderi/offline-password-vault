@@ -1,0 +1,8 @@
+{
+  "name": "secure-native",
+  "version": "1.0.0",
+  "description": "Hardware-bound keys, platform AES-GCM, sensitive clipboard and integrity checks",
+  "main": "index.ts",
+  "license": "MIT",
+  "private": true
+}
