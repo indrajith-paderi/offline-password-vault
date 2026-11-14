@@ -25,7 +25,7 @@ describe('lockout', () => {
     s = wrong(s, at(2000));
     expect(attemptsLeft(s, at(2001))).toBe(0);
     expect(lockRemainingMs(s, at(2000))).toBe(LOCK_MS);
-    expect(() => beginAttempt(s, at(2000 + H - 1))).toThrow();
+    expect(() => beginAttempt(s, at(2000 + H - 1))).toThrow('Locked out');
     expect(attemptsLeft(s, at(2000 + H))).toBe(3);
   });
 
@@ -94,5 +94,28 @@ describe('lockout', () => {
     const now = at(10);
     const json = JSON.stringify({ fails: [at(1), { wall: 'x' }, at(2)], lockedAt: null });
     expect(attemptsLeft(parseLockout(json, now), now)).toBe(1);
+  });
+
+  it('treats a missing record as a clean slate', () => {
+    const now = at(10);
+    expect(parseLockout(null, now)).toEqual(INITIAL_LOCKOUT);
+    expect(parseLockout('', now)).toEqual(INITIAL_LOCKOUT);
+  });
+
+  it.each([
+    ['a string wall time', { wall: '1', mono: 1, boot: 'b1' }],
+    ['a string monotonic time', { wall: 1, mono: '1', boot: 'b1' }],
+    ['a numeric boot id', { wall: 1, mono: 1, boot: 1 }],
+  ])('discards a stamp with %s', (_label, stamp) => {
+    const now = at(10);
+    const parsed = parseLockout(JSON.stringify({ fails: [stamp], lockedAt: stamp }), now);
+    expect(parsed).toEqual(INITIAL_LOCKOUT);
+  });
+
+  it('a lock caused by corruption expires cleanly with all attempts restored', () => {
+    const now = at(10);
+    const s = parseLockout('{not json', now);
+    expect(s.fails).toEqual([]);
+    expect(attemptsLeft(s, at(10 + LOCK_MS))).toBe(3);
   });
 });
