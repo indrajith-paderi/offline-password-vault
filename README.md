@@ -49,6 +49,12 @@ aapt dump permissions android/app/build/outputs/apk/release/app-release.apk
 
 Set `expo.extra.signingCertSha256` in `app.json` to turn on the signature check.
 
+After changing dependencies, regenerate the license list:
+
+```bash
+npm run licenses
+```
+
 ## Moving to a new phone
 
 1. Settings → Export encrypted backup
@@ -72,6 +78,10 @@ src/ui                  screens and components
 ## Security
 
 See [SECURITY.md](SECURITY.md).
+
+## Privacy
+
+See [PRIVACY.md](PRIVACY.md).
 
 ## License
 
