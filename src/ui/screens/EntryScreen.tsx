@@ -49,11 +49,11 @@ export function EntryScreen({ id }: { id: string }) {
             {opts?.secret && !reveal ? '••••••••••••' : value}
           </Text>
           {opts?.secret && (
-            <Pressable onPress={() => setReveal((r) => !r)} hitSlop={8}>
+            <Pressable testID="toggle-password" onPress={() => setReveal((r) => !r)} hitSlop={8}>
               <Text style={{ color: t.primary }}>{reveal ? 'Hide' : 'Show'}</Text>
             </Pressable>
           )}
-          <Pressable onPress={() => void copy(label, value)} hitSlop={8}>
+          <Pressable testID={`copy-${label.toLowerCase()}`} onPress={() => void copy(label, value)} hitSlop={8}>
             <Text style={{ color: t.primary }}>Copy</Text>
           </Pressable>
         </View>

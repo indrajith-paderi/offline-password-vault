@@ -67,6 +67,7 @@ export function SettingsScreen() {
             return (
               <Pressable
                 key={ms}
+                testID={`autolock-${ms}`}
                 onPress={() => {
                   const next = { ...settings, autoLockMs: ms };
                   setSettings(next);

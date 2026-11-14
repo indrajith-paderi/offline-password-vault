@@ -28,8 +28,9 @@ export function PinPad({
     }
   };
 
-  const key = (label: string, onPress: () => void, a11y = label) => (
+  const key = (label: string, onPress: () => void, a11y = label, testID = `pin-key-${label}`) => (
     <Pressable
+      testID={testID}
       key={a11y}
       accessibilityRole="button"
       accessibilityLabel={a11y}
@@ -64,9 +65,9 @@ export function PinPad({
         </View>
       ))}
       <View style={s.row}>
-        {extraKey ? key(extraKey.label, extraKey.onPress) : <View style={s.key} />}
+        {extraKey ? key(extraKey.label, extraKey.onPress, 'Biometric unlock', 'pin-key-bio') : <View style={s.key} />}
         {key('0', () => press('0'))}
-        {key('⌫', () => setPin((p) => p.slice(0, -1)), 'Delete')}
+        {key('⌫', () => setPin((p) => p.slice(0, -1)), 'Delete', 'pin-key-del')}
       </View>
     </View>
   );

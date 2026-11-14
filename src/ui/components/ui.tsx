@@ -62,18 +62,21 @@ export function Button({
   kind = 'primary',
   disabled,
   busy,
+  testID,
 }: {
   label: string;
   onPress: () => void;
   kind?: 'primary' | 'secondary' | 'danger';
   disabled?: boolean;
   busy?: boolean;
+  testID?: string;
 }) {
   const t = useTheme();
   const bg = kind === 'primary' ? t.primary : kind === 'danger' ? t.danger : t.card;
   const fg = kind === 'secondary' ? t.text : t.primaryText;
   return (
     <Pressable
+      testID={testID}
       accessibilityRole="button"
       onPress={onPress}
       disabled={disabled || busy}

@@ -46,9 +46,10 @@ export function EditScreen({ id }: { id?: string }) {
 
   return (
     <Screen title={id ? 'Edit' : 'New password'} onBack={back}>
-      <Field label="Title" value={form.title} onChangeText={set('title')} placeholder="e.g. Bank" autoCapitalize="sentences" />
-      <Field label="Username / email" value={form.username} onChangeText={set('username')} />
+      <Field testID="field-title" label="Title" value={form.title} onChangeText={set('title')} placeholder="e.g. Bank" autoCapitalize="sentences" />
+      <Field testID="field-username" label="Username / email" value={form.username} onChangeText={set('username')} />
       <Field
+        testID="field-password"
         label="Password"
         value={form.password}
         onChangeText={set('password')}
@@ -89,7 +90,7 @@ export function EditScreen({ id }: { id?: string }) {
       )}
       <Field label="Website" value={form.url} onChangeText={set('url')} keyboardType="url" />
       <Field label="Notes" value={form.notes} onChangeText={set('notes')} multiline autoCapitalize="sentences" />
-      <Button label="Save" onPress={save} busy={busy} disabled={!form.title.trim() && !form.username && !form.password} />
+      <Button testID="save-entry" label="Save" onPress={save} busy={busy} disabled={!form.title.trim() && !form.username && !form.password} />
     </Screen>
   );
 }

@@ -31,7 +31,7 @@ export function ListScreen() {
       title="Vault"
       scroll={false}
       right={
-        <Pressable onPress={() => go({ name: 'settings' })} hitSlop={12} accessibilityLabel="Settings">
+        <Pressable testID="open-settings" onPress={() => go({ name: 'settings' })} hitSlop={12} accessibilityLabel="Settings">
           <Text style={{ color: t.primary, fontSize: 16 }}>Settings</Text>
         </Pressable>
       }
@@ -42,6 +42,7 @@ export function ListScreen() {
       <TextInput
         value={q}
         onChangeText={setQ}
+        testID="search"
         placeholder="Search"
         placeholderTextColor={t.muted}
         autoCorrect={false}
@@ -92,7 +93,7 @@ export function ListScreen() {
           </Pressable>
         )}
       />
-      <Button label="+ Add password" onPress={() => go({ name: 'edit' })} />
+      <Button testID="add-entry" label="+ Add password" onPress={() => go({ name: 'edit' })} />
     </Screen>
   );
 }

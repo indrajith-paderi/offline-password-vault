@@ -67,8 +67,8 @@ export function SetupScreen({ vault }: { vault: Vault }) {
         internet permission.
       </P>
       <Notice text="There is no password recovery. If you forget your PIN and have no backup, your data is gone for good. That's the point." />
-      <Button label="Create a new vault" onPress={() => setStep('pin1')} />
-      <Button label="Restore from a backup file" kind="secondary" onPress={() => setStep('restore')} />
+      <Button testID="create-vault" label="Create a new vault" onPress={() => setStep('pin1')} />
+      <Button testID="restore-vault" label="Restore from a backup file" kind="secondary" onPress={() => setStep('restore')} />
     </Screen>
   );
 }

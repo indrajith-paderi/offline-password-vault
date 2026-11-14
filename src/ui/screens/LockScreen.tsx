@@ -103,7 +103,7 @@ export function LockScreen({ vault, blocked, warnings }: { vault: Vault; blocked
         resetSignal={reset}
         extraKey={bio && !blocked ? { label: '☝', onPress: () => void tryBio() } : undefined}
       />
-      <Pressable onPress={forgot} style={{ alignSelf: 'center', marginTop: 20 }} accessibilityRole="button">
+      <Pressable testID="forgot-pin" onPress={forgot} style={{ alignSelf: 'center', marginTop: 20 }} accessibilityRole="button">
         <Text style={{ color: t.primary }}>Forgot PIN?</Text>
       </Pressable>
     </Screen>
