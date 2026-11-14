@@ -1,31 +1,31 @@
 import { useColorScheme } from 'react-native';
 
 const light = {
-  bg: '#F6F7F9',
+  bg: '#F4F3FF',
   card: '#FFFFFF',
-  text: '#11151C',
-  muted: '#5E6673',
-  border: '#E1E4EA',
-  primary: '#2F5BEA',
+  text: '#14112B',
+  muted: '#5F5B7A',
+  border: '#E3E1F5',
+  primary: '#5B4CF0',
   primaryText: '#FFFFFF',
-  danger: '#C62828',
+  danger: '#D14343',
   warn: '#8A5A00',
   warnBg: '#FFF4D6',
-  key: '#ECEFF4',
+  key: '#ECEAFB',
 };
 
 const dark: typeof light = {
-  bg: '#0E1116',
-  card: '#171B22',
-  text: '#E8EBF0',
-  muted: '#98A1AE',
-  border: '#272D37',
-  primary: '#6E8EFF',
-  primaryText: '#0E1116',
-  danger: '#FF6B6B',
+  bg: '#0D0A26',
+  card: '#16123A',
+  text: '#ECEAFF',
+  muted: '#A39FC4',
+  border: '#2A2552',
+  primary: '#8F84FF',
+  primaryText: '#0D0A26',
+  danger: '#FF7A7A',
   warn: '#FFCF66',
   warnBg: '#2E2510',
-  key: '#20252E',
+  key: '#1C1745',
 };
 
 export type Theme = typeof light;
