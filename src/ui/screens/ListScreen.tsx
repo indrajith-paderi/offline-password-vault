@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { FlatList, Text, View } from 'react-native';
-import Animated, { FadeIn, FadeInDown, ZoomIn } from 'react-native-reanimated';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import type { ListedEntry } from '../../vault/vault';
@@ -10,25 +10,15 @@ import { IconButton, ListRow, Monogram, Notice, Overline, P, PressableScale, Sea
 import { haptic } from '../haptics';
 import { font, gutter, radius, type, useTheme } from '../theme';
 
-const STAGGER_MS = 24;
-const STAGGER_MAX = 12;
-
 export function ListScreen() {
   const { vault, go, warnings } = useApp();
   const t = useTheme();
   const [items, setItems] = useState<ListedEntry[] | null>(null);
   const [q, setQ] = useState('');
-  const firstPaint = useRef(true);
 
   useEffect(() => {
     void vault.list().then(setItems);
   }, [vault]);
-
-  useEffect(() => {
-    if (!items) return;
-    const h = setTimeout(() => (firstPaint.current = false), STAGGER_MS * STAGGER_MAX + 400);
-    return () => clearTimeout(h);
-  }, [items]);
 
   const shown = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -77,23 +67,23 @@ export function ListScreen() {
   );
 
   return (
-    <SafeAreaView testID="vault-list" style={{ flex: 1, backgroundColor: t.bg }} edges={['top', 'left', 'right']}>
+    <SafeAreaView testID="vault-list" style={{ flex: 1, backgroundColor: t.bg }} edges={['top', 'bottom', 'left', 'right']}>
+      {/* Inner wrapper so the floating button sits above the system navigation bar, never behind it. */}
+      <View style={{ flex: 1 }}>
       <FlatList
         data={shown}
         keyExtractor={(e) => e.id}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: 140, flexGrow: 1 }}
+        contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: 110, flexGrow: 1 }}
         ListHeaderComponent={header}
         ListEmptyComponent={items === null ? undefined : q ? <NoMatches /> : <EmptyVault />}
         renderItem={({ item, index }) => {
           const first = index === 0;
           const last = index === shown.length - 1;
-          const animate = firstPaint.current && index < STAGGER_MAX;
           return (
             <Animated.View
-              entering={animate ? FadeInDown.delay(index * STAGGER_MS).duration(320) : undefined}
               style={{
                 backgroundColor: t.surface,
                 borderTopLeftRadius: first ? radius.card : 0,
@@ -116,6 +106,7 @@ export function ListScreen() {
         }}
       />
       <Fab onPress={() => go({ name: 'edit' })} />
+      </View>
     </SafeAreaView>
   );
 }
@@ -123,8 +114,8 @@ export function ListScreen() {
 function Fab({ onPress }: { onPress: () => void }) {
   const t = useTheme();
   return (
-    <View pointerEvents="box-none" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 140, alignItems: 'center', justifyContent: 'flex-end' }}>
-      <Svg width="100%" height={140} style={{ position: 'absolute', bottom: 0 }} pointerEvents="none">
+    <View pointerEvents="box-none" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 110, alignItems: 'center', justifyContent: 'flex-end' }}>
+      <Svg width="100%" height={110} style={{ position: 'absolute', bottom: 0 }} pointerEvents="none">
         <Defs>
           <LinearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
             <Stop offset="0" stopColor={t.bg} stopOpacity={0} />
@@ -132,9 +123,9 @@ function Fab({ onPress }: { onPress: () => void }) {
             <Stop offset="1" stopColor={t.bg} stopOpacity={1} />
           </LinearGradient>
         </Defs>
-        <Rect x="0" y="0" width="100%" height="140" fill="url(#fade)" />
+        <Rect x="0" y="0" width="100%" height="110" fill="url(#fade)" />
       </Svg>
-      <Animated.View entering={ZoomIn.delay(150).springify().damping(13)} style={{ marginBottom: 28 }}>
+      <Animated.View style={{ marginBottom: 16 }}>
         <PressableScale
           testID="add-entry"
           accessibilityRole="button"
@@ -143,12 +134,11 @@ function Fab({ onPress }: { onPress: () => void }) {
             haptic.light();
             onPress();
           }}
-          pressedScale={0.95}
           style={{
-            height: 58,
-            paddingLeft: 20,
-            paddingRight: 26,
-            borderRadius: 29,
+            height: 52,
+            paddingLeft: 18,
+            paddingRight: 22,
+            borderRadius: 26,
             backgroundColor: t.primary,
             flexDirection: 'row',
             alignItems: 'center',
@@ -156,8 +146,8 @@ function Fab({ onPress }: { onPress: () => void }) {
             boxShadow: t.shadowPrimary,
           }}
         >
-          <Icon name="plus" size={22} color={t.onPrimary} strokeWidth={2.6} />
-          <Text style={[type.button, { fontSize: 17, color: t.onPrimary }]}>New password</Text>
+          <Icon name="plus" size={20} color={t.onPrimary} strokeWidth={2.4} />
+          <Text style={[type.button, { color: t.onPrimary }]}>New password</Text>
         </PressableScale>
       </Animated.View>
     </View>
@@ -167,12 +157,11 @@ function Fab({ onPress }: { onPress: () => void }) {
 function EmptyVault() {
   const t = useTheme();
   return (
-    <Animated.View entering={FadeIn.duration(400)} style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20, paddingTop: 40 }}>
+    <Animated.View entering={FadeIn.duration(150)} style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20, paddingTop: 40 }}>
       <View style={{ width: 200, height: 170 }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
         <View style={[cardStack, { backgroundColor: t.primarySoft, transform: [{ rotate: '-8deg' }] }]} />
         <View style={[cardStack, { backgroundColor: t.tiles[1].bg, transform: [{ rotate: '6deg' }] }]} />
         <Animated.View
-          entering={ZoomIn.delay(120).springify().damping(12)}
           style={[cardStack, { backgroundColor: t.surface, boxShadow: t.shadowCard, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 18 }]}
         >
           <View style={{ width: 40, height: 40, borderRadius: 13, backgroundColor: t.primarySoft, alignItems: 'center', justifyContent: 'center' }}>
@@ -190,7 +179,7 @@ function EmptyVault() {
           <Sparkle size={14} color={t.primary} />
         </View>
       </View>
-      <Text style={[type.title, { fontSize: 22, color: t.ink, marginTop: 18 }]}>Nothing here yet</Text>
+      <Text style={[type.title, { color: t.ink, marginTop: 18 }]}>Nothing here yet</Text>
       <P muted center style={{ marginTop: 8 }}>
         Add your first password. It’s encrypted on your device and never leaves your phone.
       </P>
@@ -201,7 +190,7 @@ function EmptyVault() {
 function NoMatches() {
   const t = useTheme();
   return (
-    <Animated.View entering={FadeIn.duration(250)} style={{ alignItems: 'center', paddingTop: 48, gap: 10 }}>
+    <Animated.View entering={FadeIn.duration(150)} style={{ alignItems: 'center', paddingTop: 48, gap: 10 }}>
       <View style={{ width: 56, height: 56, borderRadius: 18, backgroundColor: t.chip, alignItems: 'center', justifyContent: 'center' }}>
         <Icon name="search" size={24} color={t.muted} />
       </View>

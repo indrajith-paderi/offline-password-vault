@@ -4,8 +4,8 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useApp } from '../AppContext';
 import { Icon } from '../components/Icon';
-import { IconButton, P, PressableScale, SearchField } from '../components/ui';
-import { font, gutter, radius, type, useTheme } from '../theme';
+import { P, PressableScale, SearchField, TopBar } from '../components/ui';
+import { font, gutter, radius, useTheme } from '../theme';
 
 type LicensePackage = {
   name: string;
@@ -30,7 +30,8 @@ export function LicensesScreen() {
   }, [data, q]);
 
   return (
-    <SafeAreaView testID="licenses-screen" style={{ flex: 1, backgroundColor: t.bg }} edges={['top', 'left', 'right']}>
+    <SafeAreaView testID="licenses-screen" style={{ flex: 1, backgroundColor: t.bg }} edges={['top', 'bottom', 'left', 'right']}>
+      <TopBar title="Third party" onBack={back} />
       <FlatList
         data={shown}
         keyExtractor={(p) => `${p.name}@${p.version}`}
@@ -41,10 +42,6 @@ export function LicensesScreen() {
         contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: 40 }}
         ListHeaderComponent={
           <View style={{ gap: 14, paddingTop: 8, paddingBottom: 14 }}>
-            <IconButton icon="back" label="Back" onPress={back} />
-            <Text style={[type.display, { color: t.ink }]} accessibilityRole="header">
-              Acknowledgements
-            </Text>
             <P muted>Keystill is built on these open-source packages. Thank you to everyone who made them.</P>
             <SearchField value={q} onChangeText={setQ} placeholder={`Search ${data.packages.length} packages`} />
           </View>
@@ -71,11 +68,10 @@ export function LicensesScreen() {
                 accessibilityRole="button"
                 accessibilityState={{ expanded }}
                 onPress={() => setOpen(expanded ? null : key)}
-                pressedScale={0.99}
-                style={{ paddingVertical: 14, paddingHorizontal: 16 }}
+                                style={{ paddingVertical: 14, paddingHorizontal: 16 }}
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                  <Text style={{ flex: 1, fontFamily: font.bold, fontSize: 15, color: t.ink }} numberOfLines={1}>
+                  <Text style={{ flex: 1, fontFamily: font.semibold, fontSize: 14, color: t.ink }} numberOfLines={1}>
                     {item.name} <Text style={{ fontFamily: font.medium, color: t.muted }}>{item.version}</Text>
                   </Text>
                   <View style={{ paddingVertical: 4, paddingHorizontal: 8, borderRadius: 8, backgroundColor: t.chip }}>

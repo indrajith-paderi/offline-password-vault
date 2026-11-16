@@ -9,7 +9,8 @@ export type Route =
   | { name: 'export' }
   | { name: 'restore' }
   | { name: 'changePin' }
-  | { name: 'licenses' };
+  | { name: 'licenses' }
+  | { name: 'about' };
 
 export type AppCtx = {
   vault: Vault;
