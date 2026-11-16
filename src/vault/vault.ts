@@ -60,6 +60,7 @@ function sanitizeSettings(v: unknown): Settings {
 
 const summaryAad = (id: string) => `OV-S-v1|${id}`;
 const secretAad = (id: string) => `OV-X-v1|${id}`;
+const SETTINGS_AAD = 'OV-SET-v1';
 
 export function systemClock(): Clock {
   return { wall: Date.now(), mono: SecureNative.monotonicMs(), boot: SecureNative.bootId() };
@@ -302,18 +303,30 @@ export class Vault {
     this.emit();
   }
 
+  /** Settings are sealed with the vault key, so they can only be read while unlocked. */
   async getSettings(): Promise<Settings> {
+    const key = this.requireKey();
     const raw = await this.store.getMeta('settings');
     if (!raw) return DEFAULT_SETTINGS;
     try {
-      return sanitizeSettings(JSON.parse(utf8Decode(raw)));
+      return sanitizeSettings(JSON.parse(utf8Decode(open(key, raw, SETTINGS_AAD))));
+    } catch (e) {
+      if (!(e instanceof DecryptError)) return DEFAULT_SETTINGS;
+    }
+    // Older versions stored settings as plain JSON. Read it once, then re-save it sealed.
+    let legacy: Settings;
+    try {
+      legacy = sanitizeSettings(JSON.parse(utf8Decode(raw)));
     } catch {
       return DEFAULT_SETTINGS;
     }
+    await this.saveSettings(legacy);
+    return legacy;
   }
 
   async saveSettings(s: Settings): Promise<void> {
-    await this.store.setMeta({ settings: utf8Encode(JSON.stringify(sanitizeSettings(s))) });
+    const key = this.requireKey();
+    await this.store.setMeta({ settings: seal(key, utf8Encode(JSON.stringify(sanitizeSettings(s))), SETTINGS_AAD) });
   }
 
   private setKey(k: Uint8Array) {

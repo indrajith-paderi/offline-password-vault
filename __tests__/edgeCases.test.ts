@@ -144,4 +144,44 @@ describe('settings', () => {
     await store.setMeta({ settings: utf8Encode(raw) });
     expect(await vault.getSettings()).toEqual({ autoLockMs: DEFAULT_AUTO_LOCK_MS });
   });
+
+  it('stores settings encrypted, not as readable JSON', async () => {
+    const { vault, store } = await makeVault();
+    await vault.saveSettings({ autoLockMs: 30_000 });
+    const raw = (await store.getMeta('settings'))!;
+    expect(Buffer.from(raw).toString('latin1')).not.toContain('autoLockMs');
+  });
+
+  it('cannot read or write settings while locked', async () => {
+    const { vault } = await makeVault();
+    vault.lock();
+    await expect(vault.getSettings()).rejects.toThrow('locked');
+    await expect(vault.saveSettings({ autoLockMs: 30_000 })).rejects.toThrow('locked');
+  });
+
+  it('migrates plain-text settings from older versions and re-saves them encrypted', async () => {
+    const { vault, store } = await makeVault();
+    await store.setMeta({ settings: utf8Encode('{"autoLockMs":30000}') });
+    expect(await vault.getSettings()).toEqual({ autoLockMs: 30_000 });
+    const raw = (await store.getMeta('settings'))!;
+    expect(Buffer.from(raw).toString('latin1')).not.toContain('autoLockMs');
+    expect(await vault.getSettings()).toEqual({ autoLockMs: 30_000 });
+  });
+
+  it('ignores a settings blob sealed under a different label', async () => {
+    const { vault, store } = await makeVault();
+    await vault.saveSettings({ autoLockMs: 30_000 });
+    const canary = (await store.getMeta('canary'))!;
+    await store.setMeta({ settings: canary });
+    expect(await vault.getSettings()).toEqual({ autoLockMs: DEFAULT_AUTO_LOCK_MS });
+  });
+
+  it('keeps settings after the PIN is changed', async () => {
+    const { vault } = await makeVault();
+    await vault.saveSettings({ autoLockMs: 30_000 });
+    await vault.changePin('4821', '1357');
+    vault.lock();
+    await vault.unlockWithPin('1357');
+    expect(await vault.getSettings()).toEqual({ autoLockMs: 30_000 });
+  });
 });
