@@ -7,10 +7,14 @@ export { AUTO_LOCK_OPTIONS, DEFAULT_AUTO_LOCK_MS } from './idleLocker';
 
 export function useAutoLock(active: boolean, idleMs: number, lock: () => void): () => void {
   const lockRef = useRef(lock);
-  lockRef.current = lock;
+  useEffect(() => {
+    lockRef.current = lock;
+  }, [lock]);
 
   const locker = useMemo(
     () =>
+      // The callback reads lockRef only when IdleLocker fires (timers / AppState), never during render.
+      // eslint-disable-next-line react-hooks/refs
       new IdleLocker(DEFAULT_AUTO_LOCK_MS, () => {
         void clearCopiedSecret();
         lockRef.current();

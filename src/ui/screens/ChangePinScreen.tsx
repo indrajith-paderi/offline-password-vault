@@ -1,10 +1,15 @@
 import React, { useState } from 'react';
-import { ActivityIndicator } from 'react-native';
 import { formatDuration, nextFrame, useApp } from '../AppContext';
-import { PinPad } from '../components/PinPad';
-import { Notice, P, Screen } from '../components/ui';
+import { haptic } from '../haptics';
+import { PinStep } from './SetupScreen';
 
 type Step = 'current' | 'new1' | 'new2';
+
+const COPY: Record<Step, { n: number; title: string; subtitle: string }> = {
+  current: { n: 1, title: 'Enter your current PIN', subtitle: 'Your passwords stay as they are. Only the key that unlocks them is re-wrapped.' },
+  new1: { n: 2, title: 'Choose a new 4 digit PIN', subtitle: "You'll type it every time you open Keystill" },
+  new2: { n: 3, title: 'Enter the new PIN again', subtitle: 'Just making sure it sticks.' },
+};
 
 export function ChangePinScreen() {
   const { vault, back } = useApp();
@@ -13,12 +18,13 @@ export function ChangePinScreen() {
   const [next, setNext] = useState('');
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [shake, setShake] = useState(0);
 
-  const prompt = {
-    current: 'Enter your current PIN.',
-    new1: 'Choose a new 4-digit PIN.',
-    new2: 'Enter the new PIN again.',
-  }[step];
+  const fail = (m: string, to: Step) => {
+    setMsg(m);
+    setShake((n) => n + 1);
+    setStep(to);
+  };
 
   const onPin = async (pin: string) => {
     setMsg(null);
@@ -33,8 +39,7 @@ export function ChangePinScreen() {
       return;
     }
     if (pin !== next) {
-      setMsg("New PINs didn't match.");
-      setStep('new1');
+      fail("New PINs didn't match.", 'new1');
       return;
     }
     setBusy(true);
@@ -42,28 +47,36 @@ export function ChangePinScreen() {
     try {
       const r = await vault.changePin(current, next);
       if (r.ok) {
+        haptic.success();
         back();
         return;
       }
-      setMsg(
+      fail(
         r.reason === 'locked' || r.lockedForMs > 0
           ? `Too many wrong PINs. Try again in ${formatDuration(r.lockedForMs)}.`
-          : `Current PIN was wrong. ${r.attemptsLeft} attempt(s) left.`,
+          : `Current PIN was wrong · ${r.attemptsLeft} attempt${r.attemptsLeft === 1 ? '' : 's'} left`,
+        'current',
       );
-      setStep('current');
     } finally {
       setCurrent('');
       setBusy(false);
     }
   };
 
+  const c = COPY[step];
   return (
-    <Screen title="Change PIN" onBack={back}>
-      <P>{prompt}</P>
-      {msg && <Notice text={msg} />}
-      {busy && <ActivityIndicator />}
-      <PinPad onComplete={(p) => void onPin(p)} disabled={busy} resetSignal={step.length} />
-      <P muted>Your passwords are not re-encrypted; only the key that unlocks them is re-wrapped.</P>
-    </Screen>
+    <PinStep
+      testID="change-pin-screen"
+      step={c.n}
+      total={3}
+      title={busy ? 'Updating your PIN…' : c.title}
+      subtitle={c.subtitle}
+      error={msg}
+      errorSignal={shake}
+      disabled={busy}
+      resetSignal={c.n}
+      onBack={back}
+      onComplete={(p) => void onPin(p)}
+    />
   );
 }

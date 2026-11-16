@@ -10,4 +10,4 @@ name: Password stays masked until revealed, copy confirms auto-clear
 - assertVisible: s3cret-Pass!
 - tapOn:
     id: copy-password
-- assertVisible: .*copied. Clipboard clears in 30s.*
+- assertVisible: .*Password copied · clears in .*

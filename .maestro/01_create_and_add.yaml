@@ -4,7 +4,7 @@ tags:
   - smoke
 ---
 - runFlow: common/create-vault.yaml
-- assertVisible: No passwords yet. Add your first one.
+- assertVisible: Nothing here yet
 - runFlow: common/add-entry.yaml
 - assertVisible: octo@example.com
 - assertNotVisible: s3cret-Pass!

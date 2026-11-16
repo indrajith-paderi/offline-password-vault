@@ -1,18 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import { Alert, Pressable, Switch, Text, View } from 'react-native';
+import Constants from 'expo-constants';
+import React, { ReactNode, useEffect, useState } from 'react';
+import { Alert, Text, View } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import SecureNative, { DeviceKeyLevel } from '../../../modules/secure-native';
 import { AUTO_LOCK_OPTIONS } from '../../security/autoLock';
 import { useApp } from '../AppContext';
-import { Button, Card, Notice, P, Screen } from '../components/ui';
-import { useTheme } from '../theme';
+import { Icon } from '../components/Icon';
+import { Button, Card, IconTile, ListRow, Notice, Overline, Screen, Segmented, Toggle } from '../components/ui';
+import { haptic } from '../haptics';
+import { font, type, useTheme } from '../theme';
 
-const LEVEL_LABEL: Record<DeviceKeyLevel, string> = {
-  strongbox: 'StrongBox secure chip',
-  tee: 'Trusted Execution Environment',
-  secure_enclave: 'Secure Enclave',
-  keychain: 'Keychain (no Secure Enclave)',
-  software: 'Software only (weak)',
-};
+const lockLabel = (ms: number) => (ms < 60_000 ? `${ms / 1000}s` : `${ms / 60_000}m`);
+const lockA11y = (ms: number) => (ms < 60_000 ? `${ms / 1000} seconds` : `${ms / 60_000} minute${ms === 60_000 ? '' : 's'}`);
 
 export function SettingsScreen() {
   const { vault, go, back, settings, setSettings } = useApp();
@@ -35,7 +34,8 @@ export function SettingsScreen() {
     }
   };
 
-  const erase = () =>
+  const erase = () => {
+    haptic.warning();
     Alert.alert(
       'Erase vault?',
       'Every password on this phone will be permanently destroyed. Backup files you saved elsewhere are not affected.',
@@ -44,71 +44,123 @@ export function SettingsScreen() {
         { text: 'Erase', style: 'destructive', onPress: () => void vault.destroy() },
       ],
     );
+  };
+
+  const heroBg = t.dark ? t.primarySoft : '#1B1838';
 
   return (
-    <Screen title="Settings" onBack={back}>
-      <Card>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <View style={{ flex: 1, paddingRight: 12 }}>
-            <Text style={{ color: t.text, fontSize: 16 }}>Biometric unlock</Text>
-            <Text style={{ color: t.muted, fontSize: 13 }}>
-              Fingerprint / Face. Your PIN is still required every 72 hours and after new biometrics are enrolled.
+    <Screen testID="settings-screen" onBack={back} largeTitle="Settings">
+      <Animated.View entering={FadeInDown.duration(320)}>
+        <View
+          style={{
+            borderRadius: 24,
+            padding: 18,
+            backgroundColor: heroBg,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 12,
+            boxShadow: t.dark ? undefined : '0px 18px 36px -18px rgba(27,24,56,0.6)',
+          }}
+        >
+          <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: '#1F9D74', alignItems: 'center', justifyContent: 'center' }}>
+            <Icon name="shieldCheck" size={22} color="#FFFFFF" strokeWidth={2.2} />
+          </View>
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text style={{ fontFamily: font.extrabold, fontSize: 16, color: '#F2F0FF' }}>Vault protected</Text>
+            <Text style={[type.caption, { fontFamily: font.medium, color: '#C3BFE6' }]}>
+              All data remains stored locally on your device. Export only when you choose.
             </Text>
           </View>
-          <Switch value={bio} onValueChange={(v) => void toggleBio(v)} />
         </View>
-      </Card>
+      </Animated.View>
 
-      <Card>
-        <Text style={{ color: t.text, fontSize: 16 }}>Auto-lock after inactivity</Text>
-        <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
-          {AUTO_LOCK_OPTIONS.map((ms) => {
-            const active = settings.autoLockMs === ms;
-            return (
-              <Pressable
-                key={ms}
-                testID={`autolock-${ms}`}
-                onPress={() => {
-                  const next = { ...settings, autoLockMs: ms };
-                  setSettings(next);
-                  void vault.saveSettings(next);
-                }}
-                style={{
-                  paddingHorizontal: 14,
-                  paddingVertical: 8,
-                  borderRadius: 20,
-                  borderWidth: 1,
-                  borderColor: active ? t.primary : t.border,
-                  backgroundColor: active ? t.primary : 'transparent',
-                }}
-              >
-                <Text style={{ color: active ? t.primaryText : t.text }}>
-                  {ms < 60_000 ? `${ms / 1000}s` : `${ms / 60_000} min`}
-                </Text>
-              </Pressable>
-            );
-          })}
+      {level === 'software' && (
+        <Notice text="This phone has no secure hardware for keys. A 4-digit PIN offers weak protection if someone copies the app's files." />
+      )}
+
+      <Section title="Unlocking" delay={40}>
+        <ListRow
+          title="Biometric unlock"
+          subtitle="PIN required every 72 hours or when fingerprints change"
+          leading={<IconTile icon="fingerprint" bg={t.primarySoft} fg={t.primarySoftInk} />}
+          trailing={<Toggle value={bio} onChange={(v) => void toggleBio(v)} label="Biometric unlock" testID="toggle-biometrics" />}
+        />
+        <Sep />
+        <View style={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 14, gap: 12 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+            <IconTile icon="clock" bg={t.tiles[1].bg} fg={t.tiles[1].fg} />
+            <View style={{ flex: 1, gap: 2 }}>
+              <Text style={[type.rowTitle, { color: t.ink }]}>Auto-lock when idle</Text>
+              <Text style={[type.secondary, { color: t.muted }]}>Always locks instantly when you leave the app.</Text>
+            </View>
+          </View>
+          <View style={{ marginLeft: 52 }}>
+            <Segmented
+              testIDPrefix="autolock-"
+              value={settings.autoLockMs}
+              options={AUTO_LOCK_OPTIONS.map((ms) => ({ value: ms as number, label: lockLabel(ms), a11y: `Lock after ${lockA11y(ms)}` }))}
+              onChange={(ms) => {
+                const next = { ...settings, autoLockMs: ms };
+                setSettings(next);
+                void vault.saveSettings(next);
+              }}
+            />
+          </View>
         </View>
-        <Text style={{ color: t.muted, fontSize: 13 }}>The vault always locks immediately when you leave the app.</Text>
-      </Card>
+        <Sep />
+        <ListRow
+          testID="open-change-pin"
+          title="Change PIN"
+          leading={<IconTile icon="pin" bg={t.tiles[3].bg} fg={t.tiles[3].fg} />}
+          onPress={() => go({ name: 'changePin' })}
+        />
+      </Section>
 
-      <Button label="Change PIN" kind="secondary" onPress={() => go({ name: 'changePin' })} />
-      <Button label="Export encrypted backup" kind="secondary" onPress={() => go({ name: 'export' })} />
-      <Button label="Restore from backup" kind="secondary" onPress={() => go({ name: 'restore' })} />
+      <Section title="Backup" delay={80}>
+        <ListRow
+          testID="open-export"
+          title="Backup"
+          leading={<IconTile icon="download" bg={t.tiles[2].bg} fg={t.tiles[2].fg} />}
+          onPress={() => go({ name: 'export' })}
+        />
+        <Sep />
+        <ListRow
+          testID="open-restore"
+          title="Restore"
+          leading={<IconTile icon="upload" bg={t.tiles[4].bg} fg={t.tiles[4].fg} />}
+          onPress={() => go({ name: 'restore' })}
+        />
+      </Section>
 
-      <Card>
-        <Text style={{ color: t.text, fontSize: 16 }}>Security</Text>
-        <P muted>
-          Records: AES-256-GCM. PIN: Argon2id + hardware-bound key{level ? ` (${LEVEL_LABEL[level]})` : ''}.
-          No internet permission. Nothing leaves this phone unless you export a backup.
-        </P>
-        {level === 'software' && (
-          <Notice text="This phone has no secure hardware for keys. A 4-digit PIN offers weak protection if someone copies the app's files." />
-        )}
-      </Card>
+      <Section title="About" delay={120}>
+        <ListRow
+          testID="open-licenses"
+          title="Acknowledgements"
+          leading={<IconTile icon="book" bg={t.chip} fg={t.ink2} />}
+          onPress={() => go({ name: 'licenses' })}
+        />
+      </Section>
 
-      <Button label="Open source licenses" kind="secondary" onPress={() => go({ name: 'licenses' })} />
-      <Button label="Erase vault" kind="danger" onPress={erase} />
+      <View style={{ marginTop: 8, gap: 10 }}>
+        <Button testID="erase-vault" label="Erase vault" kind="danger" icon="trash" size="md" onPress={erase} />
+        <Text style={[type.caption, { fontSize: 12, color: t.muted, textAlign: 'center' }]}>
+          Keystill {Constants.expoConfig?.version ?? ''}
+        </Text>
+      </View>
     </Screen>
   );
+}
+
+function Section({ title, children, delay }: { title: string; children: ReactNode; delay: number }) {
+  return (
+    <Animated.View entering={FadeInDown.delay(delay).duration(320)} style={{ gap: 10, marginTop: 6 }}>
+      <Overline style={{ paddingLeft: 4 }}>{title}</Overline>
+      <Card padded={false}>{children}</Card>
+    </Animated.View>
+  );
+}
+
+function Sep() {
+  const t = useTheme();
+  return <View style={{ height: 1, backgroundColor: t.divider, marginLeft: 68 }} />;
 }
