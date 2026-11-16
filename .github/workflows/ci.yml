@@ -127,11 +127,12 @@ jobs:
           api-level: 34
           arch: x86_64
           target: google_apis
-          # Without a profile the AVD gets a small default screen; test on a real phone size.
-          profile: pixel_6
           disable-animations: true
           script: |
             cd android && ./gradlew :secure-native:connectedDebugAndroidTest --no-daemon && cd ..
+            # The busy CI emulator often raises "Pixel Launcher isn't responding" dialogs that
+            # cover the app and block every Maestro flow. Suppress system ANR/crash dialogs.
+            adb shell settings put global hide_error_dialogs 1
             adb install -r app-release.apk
             maestro test .maestro --format junit --output maestro-report.xml --debug-output maestro-debug
       - uses: actions/upload-artifact@v4
