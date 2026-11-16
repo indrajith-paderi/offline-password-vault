@@ -1,12 +1,11 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Text, View } from 'react-native';
-import Animated, { FadeIn, FadeInDown, FadeOut, LinearTransition } from 'react-native-reanimated';
 import { DEFAULT_GENERATOR, generatePassword, GeneratorOptions } from '../../crypto/generator';
 import type { EntryInput } from '../../vault/vault';
 import { useApp } from '../AppContext';
-import { Sparkle } from '../components/Icon';
+import { Icon, Sparkle } from '../components/Icon';
 import { Slider } from '../components/Slider';
-import { Button, Card, Field, IconButton, Monogram, PressableScale, Screen, TextLink } from '../components/ui';
+import { Button, Card, Field, IconButton, PressableScale, Screen, TextLink } from '../components/ui';
 import { haptic } from '../haptics';
 import { font, type, useTheme } from '../theme';
 import { ColoredSecret } from './EntryScreen';
@@ -32,7 +31,7 @@ export function EditScreen({ id }: { id?: string }) {
   const [form, setForm] = useState<EntryInput>(EMPTY);
   const [gen, setGenState] = useState<GeneratorOptions>(DEFAULT_GENERATOR);
   const [candidate, setCandidate] = useState(() => generatePassword(DEFAULT_GENERATOR));
-  const [showGen, setShowGen] = useState(!id);
+  const [showGen, setShowGen] = useState(false);
   const [showPw, setShowPw] = useState(false);
   const [busy, setBusy] = useState(false);
   const lastLen = useRef(gen.length);
@@ -80,13 +79,6 @@ export function EditScreen({ id }: { id?: string }) {
 
   return (
     <Screen testID="edit-screen" title={id ? 'Edit password' : 'New password'} onBack={back} backIcon="close">
-      <Animated.View entering={FadeInDown.duration(300)} style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 4, paddingVertical: 4 }}>
-        <Monogram title={form.title || '?'} size={56} />
-        <Text style={[type.caption, { flex: 1, color: t.ink2, fontFamily: font.medium, lineHeight: 19 }]}>
-          Each entry gets a colour based on its title, making it easy to identify
-        </Text>
-      </Animated.View>
-
       <Field testID="field-title" label="Title" value={form.title} onChangeText={set('title')} placeholder="e.g. Bank" autoCapitalize="sentences" />
       <Field
         testID="field-username"
@@ -110,23 +102,21 @@ export function EditScreen({ id }: { id?: string }) {
         trailing={<IconButton icon={showPw ? 'eyeOff' : 'eye'} label={showPw ? 'Hide password' : 'Show password'} kind="soft" shape="squircle" size={40} onPress={() => setShowPw((v) => !v)} />}
       />
 
-      <Animated.View layout={LinearTransition.springify().damping(18)}>
+      <View>
         {showGen ? (
-          <Animated.View key="gen" entering={FadeIn.duration(220)} exiting={FadeOut.duration(150)}>
+          <View>
             <Card style={{ gap: 16, paddingVertical: 18 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   <Sparkle size={18} color={t.primary} />
-                  <Text style={[type.heading, { fontSize: 15, color: t.ink }]}>Generator</Text>
+                  <Text style={[type.heading, { fontSize: 14, color: t.ink }]}>Generator</Text>
                 </View>
                 <TextLink label="Hide" onPress={() => setShowGen(false)} />
               </View>
 
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, paddingLeft: 16, paddingRight: 10, borderRadius: 18, backgroundColor: t.bg }}>
                 <View style={{ flex: 1 }}>
-                  <Animated.View key={candidate} entering={FadeIn.duration(160)}>
-                    <ColoredSecret value={candidate} size={16} />
-                  </Animated.View>
+                  <ColoredSecret value={candidate} size={15} />
                 </View>
                 <IconButton
                   icon="refresh"
@@ -156,7 +146,7 @@ export function EditScreen({ id }: { id?: string }) {
               <View style={{ gap: 10 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
                   <Text style={[type.rowTitle, { fontSize: 14, color: t.ink }]}>Length</Text>
-                  <Text style={{ fontFamily: font.extrabold, fontSize: 20, color: t.primary }}>{gen.length}</Text>
+                  <Text style={{ fontFamily: font.bold, fontSize: 17, color: t.primary }}>{gen.length}</Text>
                 </View>
                 <Slider
                   min={8}
@@ -191,17 +181,16 @@ export function EditScreen({ id }: { id?: string }) {
                     accessibilityLabel={a11y}
                     accessibilityState={{ checked: gen[k] }}
                     onPress={() => toggleSet(k)}
-                    pressedScale={0.93}
                     style={{
                       flex: 1,
-                      height: 48,
-                      borderRadius: 14,
+                      height: 44,
+                      borderRadius: 12,
                       alignItems: 'center',
                       justifyContent: 'center',
                       backgroundColor: gen[k] ? t.primary : t.chip,
                     }}
                   >
-                    <Text style={{ fontFamily: font.monoBold, fontSize: 15, color: gen[k] ? t.onPrimary : t.ink2 }}>{glyph}</Text>
+                    <Text style={{ fontFamily: font.monoBold, fontSize: 14, color: gen[k] ? t.onPrimary : t.ink2 }}>{glyph}</Text>
                   </PressableScale>
                 ))}
               </View>
@@ -218,9 +207,9 @@ export function EditScreen({ id }: { id?: string }) {
                 }}
               />
             </Card>
-          </Animated.View>
+          </View>
         ) : (
-          <Animated.View key="link" entering={FadeIn.duration(200)}>
+          <View>
             <PressableScale
               testID="show-generator"
               accessibilityRole="button"
@@ -229,15 +218,15 @@ export function EditScreen({ id }: { id?: string }) {
                 regenerate(gen);
                 setShowGen(true);
               }}
-              pressedScale={0.97}
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 14, paddingHorizontal: 16, borderRadius: 18, backgroundColor: t.primarySoft }}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 13, paddingHorizontal: 16, borderRadius: 18, backgroundColor: t.primarySoft }}
             >
               <Sparkle size={18} color={t.primarySoftInk} />
-              <Text style={[type.button, { fontSize: 15, color: t.primarySoftInk }]}>Generate a strong password</Text>
+              <Text style={[type.button, { flex: 1, fontSize: 14, color: t.primarySoftInk }]}>Generate a strong password</Text>
+              <Icon name="chevron" size={16} color={t.primarySoftInk} strokeWidth={2.2} />
             </PressableScale>
-          </Animated.View>
+          </View>
         )}
-      </Animated.View>
+      </View>
 
       <Field label="Website" icon="globe" value={form.url} onChangeText={set('url')} keyboardType="url" placeholder="example.com" />
       <Field label="Notes" value={form.notes} onChangeText={set('notes')} multiline autoCapitalize="sentences" placeholder="Security questions, PINs, anything" />

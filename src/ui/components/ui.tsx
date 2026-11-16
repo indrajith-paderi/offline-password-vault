@@ -17,10 +17,7 @@ import Animated, {
   interpolateColor,
   useAnimatedStyle,
   useSharedValue,
-  withRepeat,
-  withSequence,
   withSpring,
-  withTiming,
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle, Defs, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
@@ -40,8 +37,8 @@ type ScaleProps = Omit<PressableProps, 'style'> & {
   tick?: boolean;
 };
 
-/** Pressable that squishes on touch with a spring, then bounces back. */
-export function PressableScale({ style, pressedScale = 0.96, tick, onPressIn, onPressOut, onPress, ...rest }: ScaleProps) {
+/** Pressable with a subtle press-in scale (no bounce). */
+export function PressableScale({ style, pressedScale = 0.98, tick, onPressIn, onPressOut, onPress, ...rest }: ScaleProps) {
   const s = useSharedValue(1);
   const anim = useAnimatedStyle(() => ({ transform: [{ scale: s.value }] }));
   return (
@@ -100,19 +97,7 @@ export function Screen({
   );
   return (
     <SafeAreaView testID={testID} style={{ flex: 1, backgroundColor: t.bg }} edges={['top', 'bottom', 'left', 'right']}>
-      {hasBar && (
-        <View style={styles.bar}>
-          {onBack ? (
-            <IconButton icon={backIcon} label={backIcon === 'close' ? 'Close' : 'Back'} onPress={onBack} />
-          ) : (
-            <View style={styles.barSlot} />
-          )}
-          <Text style={[type.heading, styles.barTitle, { color: t.ink }]} numberOfLines={1}>
-            {title}
-          </Text>
-          <View style={[styles.barSlot, { alignItems: 'flex-end' }]}>{right}</View>
-        </View>
-      )}
+      {hasBar && <TopBar title={title} onBack={onBack} backIcon={backIcon} right={right} />}
       {scroll ? (
         <ScrollView
           contentContainerStyle={[styles.body, { flexGrow: 1 }]}
@@ -126,6 +111,24 @@ export function Screen({
       )}
       {footer ? <View style={styles.footer}>{footer}</View> : null}
     </SafeAreaView>
+  );
+}
+
+/** Top bar shared by every pushed screen: back button, centred title, optional action. */
+export function TopBar({ title, onBack, backIcon = 'back', right }: { title?: string; onBack?: () => void; backIcon?: IconName; right?: ReactNode }) {
+  const t = useTheme();
+  return (
+    <View style={styles.bar}>
+      {onBack ? (
+        <IconButton icon={backIcon} label={backIcon === 'close' ? 'Close' : 'Back'} onPress={onBack} size={40} />
+      ) : (
+        <View style={styles.barSlot} />
+      )}
+      <Text style={[type.heading, styles.barTitle, { color: t.ink }]} numberOfLines={1} accessibilityRole="header">
+        {title}
+      </Text>
+      <View style={[styles.barSlot, { alignItems: 'flex-end' }]}>{right}</View>
+    </View>
   );
 }
 
@@ -160,7 +163,7 @@ export function IconButton({
       accessibilityRole="button"
       accessibilityLabel={label}
       hitSlop={6}
-      pressedScale={0.9}
+      pressedScale={0.95}
       onPress={onPress}
       style={{
         width: size,
@@ -213,9 +216,9 @@ export function Button({
         onPress();
       }}
       disabled={off}
-      pressedScale={0.97}
+      pressedScale={0.98}
       style={{
-        height: size === 'lg' ? 58 : 50,
+        height: size === 'lg' ? 52 : 46,
         borderRadius: size === 'lg' ? radius.button : 16,
         backgroundColor: bg,
         alignItems: 'center',
@@ -232,7 +235,7 @@ export function Button({
       ) : (
         <>
           {icon ? <Icon name={icon} size={20} color={fg} strokeWidth={2.3} /> : null}
-          <Text style={[type.button, { color: fg, fontSize: size === 'lg' ? 17 : 16 }]}>{label}</Text>
+          <Text style={[type.button, { color: fg, fontSize: size === 'lg' ? 16 : 15 }]}>{label}</Text>
         </>
       )}
     </PressableScale>
@@ -251,7 +254,7 @@ export function TextLink({ label, onPress, testID, color }: { label: string; onP
       pressedScale={0.94}
       style={{ minHeight: 44, paddingHorizontal: 12, justifyContent: 'center', alignSelf: 'center' }}
     >
-      <Text style={[type.button, { fontSize: 15, color: color ?? t.primary }]}>{label}</Text>
+      <Text style={[type.button, { fontSize: 14, color: color ?? t.primary }]}>{label}</Text>
     </PressableScale>
   );
 }
@@ -276,7 +279,7 @@ export function Field({
           flexDirection: 'row',
           alignItems: multiline ? 'flex-start' : 'center',
           gap: 10,
-          minHeight: multiline ? 96 : 56,
+          minHeight: multiline ? 96 : 52,
           paddingLeft: 16,
           paddingRight: trailing ? 8 : 16,
           borderRadius: radius.field,
@@ -311,7 +314,7 @@ export function Field({
               flex: 1,
               color: t.ink,
               fontFamily: mono ? font.mono : font.medium,
-              fontSize: 16,
+              fontSize: 15,
               paddingVertical: multiline ? 14 : 12,
             },
             multiline && { minHeight: 92, textAlignVertical: 'top' },
@@ -332,7 +335,7 @@ export function SearchField(props: TextInputProps) {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 10,
-        height: 50,
+        height: 46,
         paddingHorizontal: 16,
         borderRadius: radius.field,
         backgroundColor: t.sunken,
@@ -346,7 +349,7 @@ export function SearchField(props: TextInputProps) {
         importantForAutofill="no"
         accessibilityLabel="Search"
         {...props}
-        style={{ flex: 1, color: t.ink, fontFamily: font.medium, fontSize: 16, paddingVertical: 10 }}
+        style={{ flex: 1, color: t.ink, fontFamily: font.medium, fontSize: 15, paddingVertical: 10 }}
       />
     </View>
   );
@@ -417,7 +420,6 @@ export function Segmented<T extends string | number>({
             accessibilityLabel={o.a11y ?? o.label}
             accessibilityState={{ selected: active }}
             tick
-            pressedScale={0.94}
             onPress={() => onChange(o.value)}
             style={{
               flex: 1,
@@ -502,10 +504,10 @@ export function ListRow({
       {onPress && chevron ? <Icon name="chevron" size={18} color={t.chevron} strokeWidth={2.2} /> : null}
     </>
   );
-  const rowStyle: ViewStyle = { flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 66, paddingHorizontal: 16, paddingVertical: 10 };
+  const rowStyle: ViewStyle = { flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 60, paddingHorizontal: 16, paddingVertical: 10 };
   if (!onPress) return <View style={rowStyle}>{content}</View>;
   return (
-    <PressableScale testID={testID} accessibilityRole="button" onPress={onPress} pressedScale={0.98} style={rowStyle}>
+    <PressableScale testID={testID} accessibilityRole="button" onPress={onPress} pressedScale={0.99} style={rowStyle}>
       {content}
     </PressableScale>
   );
@@ -563,7 +565,7 @@ export function Notice({ text, kind = 'warn', testID }: { text: string; kind?: '
       <View style={{ paddingTop: 1 }}>
         <Icon name={m.icon} size={20} color={m.iconColor} />
       </View>
-      <Text style={[type.body, { flex: 1, fontSize: 14, lineHeight: 21, color: m.fg }]}>{text}</Text>
+      <Text style={[type.body, { flex: 1, fontSize: 13, lineHeight: 19, color: m.fg }]}>{text}</Text>
     </View>
   );
 }
@@ -588,7 +590,7 @@ export function Pill({ text, kind, icon }: { text: string; kind: 'error' | 'succ
       }}
     >
       {icon ? <Icon name={icon} size={16} color={fg} strokeWidth={2.4} /> : null}
-      <Text style={{ fontFamily: kind === 'neutral' ? font.semibold : font.bold, fontSize: 14, color: fg }}>{text}</Text>
+      <Text style={{ fontFamily: kind === 'neutral' ? font.semibold : font.bold, fontSize: 13, color: fg }}>{text}</Text>
     </View>
   );
 }
@@ -615,15 +617,6 @@ export function P({ children, muted, center, style }: { children: ReactNode; mut
 /** The keyhole mark: gradient squircle, drawn as vectors so it is crisp at every size. */
 export function AppMark({ size = 80, halo = false }: { size?: number; halo?: boolean }) {
   const t = useTheme();
-  const breathe = useSharedValue(0);
-  useEffect(() => {
-    if (!halo) return;
-    breathe.set(withRepeat(withSequence(withTiming(1, { duration: 1600 }), withTiming(0, { duration: 1600 })), -1));
-  }, [halo, breathe]);
-  const haloStyle = useAnimatedStyle(() => ({
-    opacity: 0.55 - breathe.value * 0.4,
-    transform: [{ scale: 1 + breathe.value * 0.12 }],
-  }));
   const r = size * 0.3;
   const mark = (
     <View style={{ width: size, height: size, borderRadius: r, boxShadow: `0px ${size * 0.2}px ${size * 0.4}px -${size * 0.15}px ${t.dark ? 'rgba(140,125,255,0.55)' : 'rgba(91,76,240,0.65)'}` }}>
@@ -645,7 +638,7 @@ export function AppMark({ size = 80, halo = false }: { size?: number; halo?: boo
   const box = size * 1.5;
   return (
     <View style={{ width: box, height: box, alignItems: 'center', justifyContent: 'center' }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-      <Animated.View style={[{ position: 'absolute', width: box, height: box, borderRadius: box / 2, backgroundColor: t.primaryRing }, haloStyle]} />
+      <View style={{ position: 'absolute', width: box, height: box, borderRadius: box / 2, backgroundColor: t.primaryRing, opacity: 0.45 }} />
       {mark}
     </View>
   );
@@ -663,7 +656,7 @@ export const styles = StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 8,
   },
-  barSlot: { minWidth: 44 },
+  barSlot: { minWidth: 40 },
   barTitle: { flex: 1, textAlign: 'center' },
   footer: { paddingHorizontal: gutter, paddingTop: 8, paddingBottom: 12, gap: 12 },
 });

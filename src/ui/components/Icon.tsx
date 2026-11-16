@@ -39,6 +39,12 @@ const ICONS = {
       <Circle cx={12} cy={12} r={3} />
     </>
   ),
+  contrast: (
+    <>
+      <Circle cx={12} cy={12} r={8.5} />
+      <Path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor" />
+    </>
+  ),
   eyeOff: (
     <>
       <Path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" />
@@ -161,6 +167,7 @@ export function Icon({
       height={size}
       viewBox="0 0 24 24"
       fill="none"
+      color={color}
       stroke={color}
       strokeWidth={strokeWidth}
       strokeLinecap="round"

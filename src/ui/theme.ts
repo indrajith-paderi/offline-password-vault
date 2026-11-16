@@ -158,14 +158,14 @@ const fontNames = Platform.select({
 export const font = fontNames;
 
 export const type = {
-  display: { fontFamily: font.extrabold, fontSize: 34, lineHeight: 40, letterSpacing: -0.7 },
-  title: { fontFamily: font.extrabold, fontSize: 26, lineHeight: 32, letterSpacing: -0.3 },
-  heading: { fontFamily: font.extrabold, fontSize: 17, lineHeight: 22 },
-  rowTitle: { fontFamily: font.bold, fontSize: 16, lineHeight: 21 },
-  body: { fontFamily: font.medium, fontSize: 15, lineHeight: 22 },
-  bodyLg: { fontFamily: font.medium, fontSize: 16, lineHeight: 24 },
-  secondary: { fontFamily: font.medium, fontSize: 14, lineHeight: 19 },
-  caption: { fontFamily: font.semibold, fontSize: 13, lineHeight: 18 },
+  display: { fontFamily: font.extrabold, fontSize: 26, lineHeight: 32, letterSpacing: -0.4 },
+  title: { fontFamily: font.bold, fontSize: 21, lineHeight: 27, letterSpacing: -0.2 },
+  heading: { fontFamily: font.bold, fontSize: 16, lineHeight: 21 },
+  rowTitle: { fontFamily: font.semibold, fontSize: 15, lineHeight: 20 },
+  body: { fontFamily: font.medium, fontSize: 14, lineHeight: 20 },
+  bodyLg: { fontFamily: font.medium, fontSize: 15, lineHeight: 22 },
+  secondary: { fontFamily: font.medium, fontSize: 13, lineHeight: 18 },
+  caption: { fontFamily: font.semibold, fontSize: 12, lineHeight: 16 },
   overline: {
     fontFamily: font.extrabold,
     fontSize: 11,
@@ -173,12 +173,12 @@ export const type = {
     letterSpacing: 1.1,
     textTransform: 'uppercase',
   },
-  button: { fontFamily: font.bold, fontSize: 16, lineHeight: 20 },
-  mono: { fontFamily: font.monoBold, fontSize: 17, lineHeight: 24, letterSpacing: 0.3 },
+  button: { fontFamily: font.bold, fontSize: 15, lineHeight: 20 },
+  mono: { fontFamily: font.monoBold, fontSize: 16, lineHeight: 22, letterSpacing: 0.3 },
 } satisfies Record<string, TextStyle>;
 
 export const radius = { chip: 12, field: 16, button: 20, card: 24, sheet: 28 } as const;
 export const gutter = 20;
 
-/** Spring used for every press / pop. Reanimated honours the OS "reduce motion" setting. */
-export const spring = { damping: 18, stiffness: 260, mass: 0.8 } as const;
+/** Critically damped spring for presses and toggles: settles quickly with no bounce. */
+export const spring = { damping: 40, stiffness: 400, mass: 1 } as const;

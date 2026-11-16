@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, ScrollView, Text, View } from 'react-native';
-import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle } from 'react-native-svg';
 import { Vault } from '../../vault/vault';
@@ -104,7 +104,7 @@ export function LockScreen({ vault, blocked, warnings }: { vault: Vault; blocked
         bounces={false}
       >
         {locked ? (
-          <Animated.View key="locked" entering={FadeIn.duration(300)} style={{ alignItems: 'center' }}>
+          <Animated.View key="locked" entering={FadeIn.duration(150)} style={{ alignItems: 'center' }}>
             <LockoutRing fraction={Math.min(1, lockedForMs / LOCKOUT_WINDOW_MS)} />
             <View style={{ height: 22 }} />
             <H1 center>Too many wrong PINs.</H1>
@@ -116,8 +116,8 @@ export function LockScreen({ vault, blocked, warnings }: { vault: Vault; blocked
             </View>
           </Animated.View>
         ) : (
-          <Animated.View key="open" entering={FadeInDown.duration(380)} style={{ alignItems: 'center' }}>
-            <AppMark size={80} halo />
+          <Animated.View key="open" style={{ alignItems: 'center' }}>
+            <AppMark size={80} />
             <View style={{ height: 6 }} />
             <H1 center>Keystill</H1>
             <P muted center style={{ marginTop: 4 }}>
@@ -135,7 +135,7 @@ export function LockScreen({ vault, blocked, warnings }: { vault: Vault; blocked
 
         <View style={{ minHeight: 52, alignItems: 'center', justifyContent: 'center' }}>
           {message ? (
-            <Animated.View key={message} entering={FadeInDown.springify().damping(14)}>
+            <Animated.View key={message}>
               <Pill kind="error" icon="info" text={message} />
             </Animated.View>
           ) : busy && !locked ? (

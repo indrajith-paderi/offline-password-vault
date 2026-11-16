@@ -109,14 +109,9 @@ export function PinPad({
 
 function Dot({ on, tone }: { on: boolean; tone: PinTone }) {
   const t = useTheme();
-  const scale = useSharedValue(1);
-  useEffect(() => {
-    if (on) scale.set(withSequence(withTiming(0.5, { duration: 0 }), withSpring(1, { damping: 9, stiffness: 320 })));
-  }, [on, scale]);
-  const anim = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
   const color = !on ? t.dotOff : tone === 'error' ? t.rose : tone === 'success' ? t.mint : t.primary;
   const ring = !on ? 'transparent' : tone === 'error' ? t.roseSoft : tone === 'success' ? t.mintSoft : t.primarySoft;
-  return <Animated.View style={[s.dot, { backgroundColor: color, boxShadow: `0px 0px 0px 6px ${ring}` }, anim]} />;
+  return <Animated.View style={[s.dot, { backgroundColor: color, boxShadow: `0px 0px 0px 6px ${ring}` }]} />;
 }
 
 function PinKey({
@@ -141,7 +136,7 @@ function PinKey({
   const rest = ghost ? 'transparent' : soft ? t.primarySoft : t.key;
   const pressed = ghost ? t.chip : t.keyPressed;
   const anim = useAnimatedStyle(() => ({
-    transform: [{ scale: 1 - p.value * 0.08 }],
+    transform: [{ scale: 1 - p.value * 0.04 }],
     backgroundColor: interpolateColor(p.value, [0, 1], [rest, pressed]),
   }));
   return (
@@ -171,5 +166,5 @@ const s = StyleSheet.create({
   dot: { width: 16, height: 16, borderRadius: 8 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 16, width: '100%', maxWidth: 300 },
   key: { width: 76, height: 76, borderRadius: 38, alignItems: 'center', justifyContent: 'center' },
-  digit: { fontFamily: font.semibold, fontSize: 28 },
+  digit: { fontFamily: font.semibold, fontSize: 24 },
 });
