@@ -7,10 +7,10 @@ Keystill doesn't collect, send or share any of your data. There are no accounts,
 ## What the app stores
 
 - The entries you create: titles, usernames, URLs, passwords and notes
-- Your settings, such as the auto-lock time and whether biometric unlock is on
+- Your settings: the auto-lock time, the theme, and whether biometric unlock is on
 - Internal security data, such as failed PIN attempts for the lockout
 
-Your entries are encrypted with AES-256-GCM before they are saved. Settings are stored without encryption because they contain nothing personal. Everything stays on your device.
+Your entries and the auto-lock time are encrypted with AES-256-GCM before they are saved. The theme is kept in your phone's secure storage. Whether biometric unlock is on is stored without encryption, because the lock screen needs it before you unlock; it contains nothing personal. Everything stays on your device.
 
 ## Network
 
