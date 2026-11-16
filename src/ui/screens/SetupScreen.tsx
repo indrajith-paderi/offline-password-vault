@@ -89,12 +89,13 @@ function Welcome({ onCreate, onRestore }: { onCreate: () => void; onRestore: () 
         <Animated.View style={{ marginTop: 20 }}>
           <Notice text="No recovery without a backup. Lose your PIN, and your data is gone." />
         </Animated.View>
-
-        <Animated.View style={{ marginTop: 'auto', gap: 12, paddingTop: 20 }}>
-          <Button testID="create-vault" label="Create a new vault" onPress={onCreate} />
-          <Button testID="restore-vault" label="Restore from a backup" kind="soft" onPress={onRestore} />
-        </Animated.View>
       </ScrollView>
+
+      {/* Pinned below the scroll area so the main actions are on screen even on small phones. */}
+      <View style={{ gap: 12, paddingHorizontal: 24, paddingTop: 12, paddingBottom: 12 }}>
+        <Button testID="create-vault" label="Create a new vault" onPress={onCreate} />
+        <Button testID="restore-vault" label="Restore from a backup" kind="soft" onPress={onRestore} />
+      </View>
     </SafeAreaView>
   );
 }

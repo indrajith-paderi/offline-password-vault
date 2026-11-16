@@ -127,6 +127,8 @@ jobs:
           api-level: 34
           arch: x86_64
           target: google_apis
+          # Without a profile the AVD gets a small default screen; test on a real phone size.
+          profile: pixel_6
           disable-animations: true
           script: |
             cd android && ./gradlew :secure-native:connectedDebugAndroidTest --no-daemon && cd ..
@@ -136,6 +138,8 @@ jobs:
         if: always()
         with:
           name: maestro-report
+          # Maestro writes screenshots and logs under a hidden .maestro folder.
+          include-hidden-files: true
           path: |
             maestro-report.xml
             maestro-debug
