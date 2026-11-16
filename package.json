@@ -30,7 +30,7 @@
     "react-native-worklets": "0.13.0"
   },
   "devDependencies": {
-    "@noble/hashes": "^1.8.0",
+    "@noble/hashes": "^2.4.0",
     "@stryker-mutator/core": "^10.1.1",
     "@stryker-mutator/jest-runner": "^10.1.1",
     "@stryker-mutator/typescript-checker": "^10.1.1",
