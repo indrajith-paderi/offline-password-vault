@@ -7,7 +7,8 @@ import {
   readBackupInfo,
   WrongBackupPasswordError,
 } from '../src/backup/format';
-import { backupPasswordProblem } from '../src/backup/passwordPolicy';
+import fc from 'fast-check';
+import { backupPasswordChecks, backupPasswordProblem } from '../src/backup/passwordPolicy';
 import { MemoryStore } from '../src/vault/store';
 import { Vault } from '../src/vault/vault';
 
@@ -95,5 +96,28 @@ describe('backup password policy', () => {
     ['correct horse battery staple', true],
   ])('%s -> ok=%s', (pw, ok) => {
     expect(backupPasswordProblem(pw) === null).toBe(ok);
+  });
+});
+
+describe('backup password checklist', () => {
+  it.each([
+    ['', { length: false, variety: false, notWeak: false }],
+    ['short1A!', { length: false, variety: true, notWeak: true }],
+    ['alllowercaseletters', { length: true, variety: false, notWeak: true }],
+    ['Password123!xyz', { length: true, variety: true, notWeak: false }],
+    ['aaaaaaaaaaaaaaaaaaaaaa', { length: true, variety: true, notWeak: false }],
+    ['Blue-Kettle-91-Orbit', { length: true, variety: true, notWeak: true }],
+  ])('%s', (pw, expected) => {
+    expect(backupPasswordChecks(pw)).toEqual(expected);
+  });
+
+  it('every check passes exactly when the policy accepts the password', () => {
+    fc.assert(
+      fc.property(fc.string({ maxLength: 40 }), (pw) => {
+        const c = backupPasswordChecks(pw);
+        expect(c.length && c.variety && c.notWeak).toBe(backupPasswordProblem(pw) === null);
+      }),
+      { numRuns: 2000 },
+    );
   });
 });

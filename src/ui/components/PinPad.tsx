@@ -1,25 +1,65 @@
 import React, { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useTheme } from '../theme';
+import Animated, {
+  interpolateColor,
+  useAnimatedStyle,
+  useSharedValue,
+  withSequence,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
+import { haptic } from '../haptics';
+import { font, spring, useTheme } from '../theme';
+import { Icon } from './Icon';
+
+export type PinTone = 'idle' | 'error' | 'success';
 
 export function PinPad({
   onComplete,
   disabled,
   extraKey,
   resetSignal,
+  errorSignal,
+  tone = 'idle',
 }: {
   onComplete: (pin: string) => void;
   disabled?: boolean;
   extraKey?: { label: string; onPress: () => void };
   resetSignal?: number;
+  /** Increment to shake the dots (wrong PIN / mismatch). */
+  errorSignal?: number;
+  tone?: PinTone;
 }) {
   const t = useTheme();
   const [pin, setPin] = useState('');
+  const [seenReset, setSeenReset] = useState(resetSignal);
+  const shake = useSharedValue(0);
 
-  useEffect(() => setPin(''), [resetSignal]);
+  // Clear typed digits when the parent bumps resetSignal (adjust-state-during-render pattern).
+  if (seenReset !== resetSignal) {
+    setSeenReset(resetSignal);
+    setPin('');
+  }
+
+  useEffect(() => {
+    if (!errorSignal) return;
+    haptic.error();
+    shake.set(
+      withSequence(
+        withTiming(-12, { duration: 60 }),
+        withTiming(10, { duration: 70 }),
+        withTiming(-6, { duration: 70 }),
+        withTiming(3, { duration: 60 }),
+        withTiming(0, { duration: 60 }),
+      ),
+    );
+  }, [errorSignal, shake]);
+
+  const shakeStyle = useAnimatedStyle(() => ({ transform: [{ translateX: shake.value }] }));
 
   const press = (d: string) => {
     if (disabled || pin.length >= 4) return;
+    haptic.tick();
     const next = pin + d;
     setPin(next);
     if (next.length === 4) {
@@ -28,56 +68,108 @@ export function PinPad({
     }
   };
 
-  const key = (label: string, onPress: () => void, a11y = label, testID = `pin-key-${label}`) => (
-    <Pressable
-      testID={testID}
-      key={a11y}
-      accessibilityRole="button"
-      accessibilityLabel={a11y}
-      onPress={onPress}
-      disabled={disabled}
-      style={({ pressed }) => [
-        s.key,
-        { backgroundColor: t.key, opacity: disabled ? 0.4 : pressed ? 0.6 : 1 },
-      ]}
-    >
-      <Text style={[s.keyText, { color: t.text }]}>{label}</Text>
-    </Pressable>
-  );
+  const del = () => {
+    if (disabled) return;
+    haptic.tick();
+    setPin((p) => p.slice(0, -1));
+  };
+
+  const filled = tone === 'success' ? 4 : pin.length;
 
   return (
     <View style={s.wrap}>
-      <View style={s.dots} accessibilityLabel={`${pin.length} of 4 digits entered`}>
+      <Animated.View style={[s.dots, shakeStyle]} accessible accessibilityLabel={`${pin.length} of 4 digits entered`}>
         {[0, 1, 2, 3].map((i) => (
-          <View
-            key={i}
-            style={[s.dot, { borderColor: t.text, backgroundColor: i < pin.length ? t.text : 'transparent' }]}
-          />
+          <Dot key={i} on={i < filled} tone={tone} />
         ))}
-      </View>
-      {[
-        ['1', '2', '3'],
-        ['4', '5', '6'],
-        ['7', '8', '9'],
-      ].map((row) => (
-        <View key={row.join()} style={s.row}>
-          {row.map((d) => key(d, () => press(d)))}
-        </View>
-      ))}
-      <View style={s.row}>
-        {extraKey ? key(extraKey.label, extraKey.onPress, 'Biometric unlock', 'pin-key-bio') : <View style={s.key} />}
-        {key('0', () => press('0'))}
-        {key('⌫', () => setPin((p) => p.slice(0, -1)), 'Delete', 'pin-key-del')}
+      </Animated.View>
+      <View style={s.grid}>
+        {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((d) => (
+          <PinKey key={d} testID={`pin-key-${d}`} a11y={d} onPress={() => press(d)} disabled={disabled}>
+            <Text style={[s.digit, { color: t.ink }]}>{d}</Text>
+          </PinKey>
+        ))}
+        {extraKey ? (
+          <PinKey testID="pin-key-bio" a11y="Biometric unlock" onPress={extraKey.onPress} disabled={disabled} soft>
+            <Icon name="fingerprint" size={30} color={t.primarySoftInk} strokeWidth={1.8} />
+          </PinKey>
+        ) : (
+          <View style={s.key} />
+        )}
+        <PinKey testID="pin-key-0" a11y="0" onPress={() => press('0')} disabled={disabled}>
+          <Text style={[s.digit, { color: t.ink }]}>0</Text>
+        </PinKey>
+        <PinKey testID="pin-key-del" a11y="Delete" onPress={del} disabled={disabled} ghost>
+          <Icon name="backspace" size={28} color={t.ink2} strokeWidth={1.9} />
+        </PinKey>
       </View>
     </View>
   );
 }
 
+function Dot({ on, tone }: { on: boolean; tone: PinTone }) {
+  const t = useTheme();
+  const scale = useSharedValue(1);
+  useEffect(() => {
+    if (on) scale.set(withSequence(withTiming(0.5, { duration: 0 }), withSpring(1, { damping: 9, stiffness: 320 })));
+  }, [on, scale]);
+  const anim = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  const color = !on ? t.dotOff : tone === 'error' ? t.rose : tone === 'success' ? t.mint : t.primary;
+  const ring = !on ? 'transparent' : tone === 'error' ? t.roseSoft : tone === 'success' ? t.mintSoft : t.primarySoft;
+  return <Animated.View style={[s.dot, { backgroundColor: color, boxShadow: `0px 0px 0px 6px ${ring}` }, anim]} />;
+}
+
+function PinKey({
+  children,
+  onPress,
+  disabled,
+  testID,
+  a11y,
+  soft,
+  ghost,
+}: {
+  children: React.ReactNode;
+  onPress: () => void;
+  disabled?: boolean;
+  testID: string;
+  a11y: string;
+  soft?: boolean;
+  ghost?: boolean;
+}) {
+  const t = useTheme();
+  const p = useSharedValue(0);
+  const rest = ghost ? 'transparent' : soft ? t.primarySoft : t.key;
+  const pressed = ghost ? t.chip : t.keyPressed;
+  const anim = useAnimatedStyle(() => ({
+    transform: [{ scale: 1 - p.value * 0.08 }],
+    backgroundColor: interpolateColor(p.value, [0, 1], [rest, pressed]),
+  }));
+  return (
+    <Pressable
+      testID={testID}
+      accessibilityRole="button"
+      accessibilityLabel={a11y}
+      accessibilityState={{ disabled: !!disabled }}
+      disabled={disabled}
+      onPress={onPress}
+      onPressIn={() => {
+        p.set(withSpring(1, spring));
+      }}
+      onPressOut={() => {
+        p.set(withSpring(0, spring));
+      }}
+      style={{ opacity: disabled ? 0.38 : 1 }}
+    >
+      <Animated.View style={[s.key, { boxShadow: ghost || soft ? undefined : t.shadowKey }, anim]}>{children}</Animated.View>
+    </Pressable>
+  );
+}
+
 const s = StyleSheet.create({
-  wrap: { alignItems: 'center', gap: 14 },
-  dots: { flexDirection: 'row', gap: 18, marginBottom: 18 },
-  dot: { width: 16, height: 16, borderRadius: 8, borderWidth: 2 },
-  row: { flexDirection: 'row', gap: 18 },
+  wrap: { alignItems: 'center', gap: 36, width: '100%' },
+  dots: { flexDirection: 'row', gap: 22, height: 28, alignItems: 'center' },
+  dot: { width: 16, height: 16, borderRadius: 8 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 16, width: '100%', maxWidth: 300 },
   key: { width: 76, height: 76, borderRadius: 38, alignItems: 'center', justifyContent: 'center' },
-  keyText: { fontSize: 28, fontWeight: '500' },
+  digit: { fontFamily: font.semibold, fontSize: 28 },
 });

@@ -123,7 +123,21 @@ while (queue.length) {
 }
 
 const texts = {};
-const packages = [...seen.values(), ...EXTRA]
+const FONTS = [
+  ['Plus Jakarta Sans (font)', '@expo-google-fonts/plus-jakarta-sans', 'https://github.com/tokotype/PlusJakartaSans'],
+  ['JetBrains Mono (font)', '@expo-google-fonts/jetbrains-mono', 'https://github.com/JetBrains/JetBrainsMono'],
+].map(([name, pkgName, url]) => {
+  const dir = path.join(root, 'node_modules', pkgName);
+  return {
+    name,
+    version: require(path.join(dir, 'package.json')).version,
+    license: 'OFL-1.1',
+    url,
+    text: fs.readFileSync(path.join(dir, 'LICENSE_FONT'), 'utf8'),
+  };
+});
+
+const packages = [...seen.values(), ...EXTRA, ...FONTS]
   .sort((a, b) => a.name.localeCompare(b.name) || a.version.localeCompare(b.version))
   .map(({ text, ...rest }) => {
     if (!text) return { ...rest, textId: null };

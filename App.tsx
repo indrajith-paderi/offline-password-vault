@@ -2,7 +2,8 @@ import * as ScreenCapture from 'expo-screen-capture';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, BackHandler, Platform, View } from 'react-native';
+import { BackHandler, Platform, View } from 'react-native';
+import Animated, { Easing, Keyframe } from 'react-native-reanimated';
 import sodium from 'react-native-libsodium';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useAutoLock } from './src/security/autoLock';
@@ -19,12 +20,26 @@ import { LockScreen } from './src/ui/screens/LockScreen';
 import { RestoreScreen } from './src/ui/screens/RestoreScreen';
 import { SettingsScreen } from './src/ui/screens/SettingsScreen';
 import { SetupScreen } from './src/ui/screens/SetupScreen';
+import { AppMark } from './src/ui/components/ui';
 import { useTheme } from './src/ui/theme';
 import { SqliteStore } from './src/vault/sqliteStore';
 import { Settings, Vault } from './src/vault/vault';
 
 void SplashScreen.preventAutoHideAsync();
 SplashScreen.setOptions({ duration: 250, fade: true });
+
+const ENTER_FWD = new Keyframe({
+  0: { opacity: 0, transform: [{ translateX: 28 }] },
+  100: { opacity: 1, transform: [{ translateX: 0 }], easing: Easing.out(Easing.cubic) },
+}).duration(260);
+const ENTER_BACK = new Keyframe({
+  0: { opacity: 0, transform: [{ translateX: -28 }] },
+  100: { opacity: 1, transform: [{ translateX: 0 }], easing: Easing.out(Easing.cubic) },
+}).duration(260);
+const ENTER_FADE = new Keyframe({
+  0: { opacity: 0, transform: [{ scale: 0.98 }] },
+  100: { opacity: 1, transform: [{ scale: 1 }], easing: Easing.out(Easing.cubic) },
+}).duration(280);
 
 type Boot =
   | { phase: 'loading' }
@@ -53,6 +68,7 @@ export default function App() {
         const init = await vault.isInitialized();
         if (unlocked) setSettings(await vault.getSettings());
         else void clearCopiedSecret();
+        setDir('fwd');
         setStack([{ name: 'list' }]);
         setState((s) => (s.phase === 'ready' ? { ...s, initialized: init, unlocked } : s));
       });
@@ -64,8 +80,15 @@ export default function App() {
   const lock = useCallback(() => ready?.vault.lock(), [ready]);
   const poke = useAutoLock(!!ready?.unlocked, settings.autoLockMs, lock);
 
-  const go = useCallback((r: Route) => setStack((s) => [...s, r]), []);
-  const back = useCallback(() => setStack((s) => (s.length > 1 ? s.slice(0, -1) : s)), []);
+  const [dir, setDir] = useState<'fwd' | 'back'>('fwd');
+  const go = useCallback((r: Route) => {
+    setDir('fwd');
+    setStack((s) => [...s, r]);
+  }, []);
+  const back = useCallback(() => {
+    setDir('back');
+    setStack((s) => (s.length > 1 ? s.slice(0, -1) : s));
+  }, []);
 
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -87,18 +110,25 @@ export default function App() {
   );
 
   let body: React.ReactNode;
+  let sceneKey: string;
+  let enter = ENTER_FADE;
   if (!ready || !ctx) {
+    sceneKey = 'boot';
     body = (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: t.bg }}>
-        <ActivityIndicator />
+        <AppMark size={80} halo />
       </View>
     );
   } else if (!ready.initialized) {
+    sceneKey = 'setup';
     body = <SetupScreen vault={ready.vault} />;
   } else if (!ready.unlocked || ready.integrity.blocked) {
+    sceneKey = 'lock';
     body = <LockScreen vault={ready.vault} blocked={ready.integrity.blocked} warnings={ready.integrity.warnings} />;
   } else {
     const r = stack[stack.length - 1];
+    sceneKey = `${stack.length}:${r.name}:${'id' in r ? r.id ?? '' : ''}`;
+    enter = stack.length === 1 && dir === 'fwd' ? ENTER_FADE : dir === 'fwd' ? ENTER_FWD : ENTER_BACK;
     body = (
       <>
         {r.name === 'list' && <ListScreen />}
@@ -117,7 +147,9 @@ export default function App() {
     <SafeAreaProvider>
       <StatusBar style="auto" />
       <View style={{ flex: 1, backgroundColor: t.bg }} onTouchStart={poke}>
-        {ctx ? <AppContext.Provider value={ctx}>{body}</AppContext.Provider> : body}
+        <Animated.View key={sceneKey} entering={enter} style={{ flex: 1 }}>
+          {ctx ? <AppContext.Provider value={ctx}>{body}</AppContext.Provider> : body}
+        </Animated.View>
       </View>
     </SafeAreaProvider>
   );
