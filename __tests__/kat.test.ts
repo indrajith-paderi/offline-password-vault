@@ -1,4 +1,4 @@
-import { argon2id as nobleArgon2id } from '@noble/hashes/argon2';
+import { argon2id as nobleArgon2id } from '@noble/hashes/argon2.js';
 import fc from 'fast-check';
 import vectors from '../modules/secure-native/test-vectors/aes-gcm.json';
 import { DecryptError, open, seal } from '../src/crypto/aead';
