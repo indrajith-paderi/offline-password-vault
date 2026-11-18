@@ -1,48 +1,47 @@
 # Privacy Policy
 
-Last updated: 2026-11-14
+Last updated: 2026-11-16
 
-## Summary
+Keystill doesn't collect, send or share any of your data. There are no accounts, no servers and no analytics.
 
-Keystill doesn't collect, transmit or share any data.
+## What the app stores
 
-## Data stored
+- The entries you create: titles, usernames, URLs, passwords and notes
+- Your settings: the auto-lock time, the theme, and whether biometric unlock is on
+- Internal security data, such as failed PIN attempts for the lockout
 
-- Passwords, usernames, URLs and notes you enter
-- App settings (auto-lock timeout, biometric preference)
-
-All of it is stored only on your device, encrypted with AES-256-GCM.
+Your entries and the auto-lock time are encrypted with AES-256-GCM before they are saved. The theme is kept in your phone's secure storage. Whether biometric unlock is on is stored without encryption, because the lock screen needs it before you unlock; it contains nothing personal. Everything stays on your device.
 
 ## Network
 
-The app doesn't request network permission and makes no network connections. No analytics, crash reporting, ads or tracking.
+The app makes no network connections. The Android release build doesn't even have permission to use the internet. There is no analytics, crash reporting, advertising or tracking.
 
 ## Biometrics
 
-Fingerprint and face data are handled by the operating system. The app never receives or stores biometric data.
+Fingerprint and face recognition are handled by your phone's operating system. The app only learns whether the check passed, and never receives or stores biometric data.
 
 ## Backups
 
-Backup files are created only when you export one. They're encrypted with your backup password and saved wherever you choose. The app doesn't upload them anywhere.
+A backup file is created only when you export one. It's encrypted with the backup password you choose, and saved or sent wherever you pick. The app never uploads it anywhere.
 
-The app excludes its data from Android cloud backup and device-to-device transfer.
+On Android, the app's data is excluded from cloud backup and device-to-device transfer. On iOS, the encrypted database may be included in your device backup, but it can't be decrypted without a key that never leaves the original phone.
 
 ## Third parties
 
-No data is shared with third parties.
+No data is shared with anyone.
 
 ## Deleting your data
 
-Use Settings → Erase vault, or uninstall the app. Exported backup files you saved elsewhere aren't affected.
+Go to Settings → Erase vault, or uninstall the app. Erasing deletes the vault and its device keys. Backup files you exported are not affected, so delete those yourself if you no longer need them.
 
 ## Children
 
-The app doesn't knowingly collect data from anyone, including children.
+The app doesn't collect data from anyone, including children.
 
 ## Changes
 
-Updates to this policy will be published in this file.
+Any changes to this policy will be published in this file, with a new "Last updated" date.
 
 ## Contact
 
-Open an issue at https://github.com/indrajith-paderi/offline-password-vault/issues
+Questions about this policy: open an issue at https://github.com/indrajith-paderi/offline-password-vault/issues

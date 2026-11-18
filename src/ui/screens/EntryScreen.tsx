@@ -1,6 +1,6 @@
 import React, { ReactNode, useEffect, useState } from 'react';
 import { Alert, ScrollView, Text, View } from 'react-native';
-import Animated, { Easing, FadeIn, FadeInDown, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { copySecret } from '../../security/clipboard';
 import type { Entry } from '../../vault/types';
@@ -77,7 +77,7 @@ export function EntryScreen({ id }: { id: string }) {
       <View key="p">
         <FieldRow label="Password">
           {reveal ? (
-            <Animated.View entering={FadeIn.duration(180)}>
+            <Animated.View>
               <ColoredSecret value={entry.password} />
             </Animated.View>
           ) : (
@@ -131,7 +131,7 @@ export function EntryScreen({ id }: { id: string }) {
       </View>
 
       <ScrollView contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: 110, gap: 14, flexGrow: 1 }} showsVerticalScrollIndicator={false}>
-        <Animated.View entering={FadeInDown.duration(320)} style={{ alignItems: 'center', gap: 10, marginTop: 14, marginBottom: 8 }}>
+        <Animated.View style={{ alignItems: 'center', gap: 10, marginTop: 14, marginBottom: 8 }}>
           <View style={{ boxShadow: '0px 14px 28px -16px rgba(67,53,214,0.5)', borderRadius: 24 }}>
             <Monogram title={entry.title} size={76} />
           </View>
@@ -147,7 +147,7 @@ export function EntryScreen({ id }: { id: string }) {
         </Animated.View>
 
         {rows.length > 0 && (
-          <Animated.View entering={FadeInDown.delay(60).duration(320)}>
+          <Animated.View>
             <Card padded={false}>
               {rows.map((r, i) => (
                 <View key={i}>
@@ -160,7 +160,7 @@ export function EntryScreen({ id }: { id: string }) {
         )}
 
         {!!entry.notes && (
-          <Animated.View entering={FadeInDown.delay(120).duration(320)}>
+          <Animated.View>
             <Card>
               <Overline>Notes</Overline>
               <Text selectable style={[type.body, { color: t.ink2 }]}>
@@ -257,7 +257,7 @@ function RevealTimer() {
   }, [p]);
   const bar = useAnimatedStyle(() => ({ transform: [{ scaleX: p.value }] }));
   return (
-    <Animated.View entering={FadeIn.duration(200)} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingLeft: 18, paddingRight: 16, paddingBottom: 12 }}>
+    <Animated.View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingLeft: 18, paddingRight: 16, paddingBottom: 12 }}>
       <View style={{ flex: 1, height: 4, borderRadius: 2, backgroundColor: t.divider, overflow: 'hidden' }}>
         <Animated.View style={[{ height: 4, borderRadius: 2, backgroundColor: t.toastRing, transformOrigin: 'left' }, bar]} />
       </View>

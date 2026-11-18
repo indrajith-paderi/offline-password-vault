@@ -2,11 +2,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Text, View } from 'react-native';
 import Animated, {
   Easing,
-  FadeOutDown,
   useAnimatedProps,
   useSharedValue,
   withTiming,
-  ZoomIn,
 } from 'react-native-reanimated';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { CLIPBOARD_CLEAR_MS } from '../../security/clipboard';
@@ -54,8 +52,6 @@ export function CopyToast({ event, onDone }: { event: CopyEvent; onDone: () => v
 
   return (
     <Animated.View
-      entering={ZoomIn.springify().damping(14)}
-      exiting={FadeOutDown.duration(180)}
       pointerEvents="none"
       style={{ position: 'absolute', left: 0, right: 0, bottom: 28, alignItems: 'center' }}
     >
@@ -90,7 +86,7 @@ export function CopyToast({ event, onDone }: { event: CopyEvent; onDone: () => v
           />
           <Path d="m11.5 17 3.6 3.6L22.5 13" fill="none" stroke={t.toastInk} strokeWidth={2.3} strokeLinecap="round" strokeLinejoin="round" />
         </Svg>
-        <Text style={{ fontFamily: font.semibold, fontSize: 14, color: t.toastInk }}>
+        <Text style={{ fontFamily: font.semibold, fontSize: 13, color: t.toastInk }}>
           {event.label} copied · clears in {left}s
         </Text>
       </View>

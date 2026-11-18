@@ -1,7 +1,7 @@
 import Constants from 'expo-constants';
 import React, { useState } from 'react';
 import { Alert, Text, View } from 'react-native';
-import Animated, { FadeIn, FadeInDown, ZoomIn } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { saveBackupToFolder, shareBackup } from '../../backup/backupFiles';
 import { backupFileName, createBackup } from '../../backup/format';
 import { backupPasswordChecks, backupPasswordProblem } from '../../backup/passwordPolicy';
@@ -67,7 +67,7 @@ export function ExportScreen() {
 
   return (
     <Screen testID="export-screen" title="Export backup" onBack={back}>
-      <Animated.View entering={FadeInDown.duration(300)}>
+      <Animated.View>
         <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 16, paddingVertical: 18 }}>
           <FileGlyph />
           <View style={{ flex: 1, gap: 4 }}>
@@ -105,14 +105,14 @@ export function ExportScreen() {
         textContentType="none"
         trailing={
           match ? (
-            <Animated.View entering={ZoomIn.springify().damping(12)} style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: t.mintSoft, alignItems: 'center', justifyContent: 'center', marginRight: 4 }} accessibilityLabel="Passwords match">
+            <Animated.View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: t.mintSoft, alignItems: 'center', justifyContent: 'center', marginRight: 4 }} accessibilityLabel="Passwords match">
               <Icon name="check" size={16} color={t.mintInk} strokeWidth={2.8} />
             </Animated.View>
           ) : undefined
         }
       />
       {mismatch && (
-        <Animated.View entering={FadeIn}>
+        <Animated.View>
           <Notice kind="error" text="Passwords don't match." />
         </Animated.View>
       )}
@@ -120,7 +120,7 @@ export function ExportScreen() {
       <Notice text="Keep this password safe and separate from the backup file. Without it, recovery is impossible." />
 
       {done && (
-        <Animated.View entering={FadeInDown.springify().damping(14)}>
+        <Animated.View>
           <Notice kind="success" text={done} />
         </Animated.View>
       )}
@@ -139,7 +139,7 @@ function Check({ ok, active, text }: { ok: boolean; active: boolean; text: strin
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }} accessible accessibilityLabel={`${text}: ${ok ? 'met' : 'not met'}`}>
       {ok && active ? (
-        <Animated.View key="ok" entering={ZoomIn.springify().damping(12)}>
+        <Animated.View key="ok">
           <Icon name="check" size={16} color={t.mintInk} strokeWidth={2.6} />
         </Animated.View>
       ) : (

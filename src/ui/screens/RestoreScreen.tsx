@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Alert, Text, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { pickBackupFile } from '../../backup/backupFiles';
 import {
   BackupFormatError,
@@ -153,13 +153,13 @@ export function RestoreFlow({
       <Stepper stage={stage} />
 
       {error && (
-        <Animated.View entering={FadeInDown.springify().damping(14)}>
+        <Animated.View>
           <Notice kind="error" text={error} />
         </Animated.View>
       )}
 
       {entries ? (
-        <Animated.View key="import" entering={FadeInDown.duration(300)} style={{ gap: 14, flex: 1 }}>
+        <Animated.View key="import" style={{ gap: 14, flex: 1 }}>
           <Notice kind="success" text={`Backup verified: ${entries.length} entr${entries.length === 1 ? 'y' : 'ies'}.`} />
           <View style={{ marginTop: 'auto', gap: 12, paddingTop: 12 }}>
             <Button testID="restore-merge" label="Merge into current vault" onPress={() => confirmExisting('merge')} />
@@ -167,7 +167,7 @@ export function RestoreFlow({
           </View>
         </Animated.View>
       ) : !file ? (
-        <Animated.View key="pick" entering={FadeInDown.duration(300)} style={{ gap: 14, flex: 1 }}>
+        <Animated.View key="pick" style={{ gap: 14, flex: 1 }}>
           <PressableScale
             testID="choose-backup"
             accessibilityRole="button"
@@ -197,7 +197,7 @@ export function RestoreFlow({
           <Notice kind="info" text="Your vault remains unchanged until the backup is fully decrypted and verified. This may take a few seconds" />
         </Animated.View>
       ) : (
-        <Animated.View key="unlock" entering={FadeInDown.duration(300)} style={{ gap: 14, flex: 1 }}>
+        <Animated.View key="unlock" style={{ gap: 14, flex: 1 }}>
           <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
             <View style={{ width: 48, height: 56, borderRadius: 12, backgroundColor: t.primarySoft, alignItems: 'center', justifyContent: 'center' }}>
               <Icon name="file" size={22} color={t.primarySoftInk} />

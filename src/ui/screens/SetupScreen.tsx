@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
-import Animated, { FadeIn, FadeInDown, ZoomIn } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Vault } from '../../vault/vault';
 import { nextFrame } from '../AppContext';
@@ -66,9 +66,9 @@ function Welcome({ onCreate, onRestore }: { onCreate: () => void; onRestore: () 
     <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }}>
       <ScrollView contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 24, paddingBottom: 12 }} showsVerticalScrollIndicator={false}>
         <View style={{ height: 300, alignItems: 'center', justifyContent: 'center' }}>
-          <Animated.View entering={ZoomIn.duration(500)} style={{ position: 'absolute', width: 264, height: 264, borderRadius: 132, backgroundColor: t.chip }} />
-          <Animated.View entering={ZoomIn.delay(80).duration(500)} style={{ position: 'absolute', width: 192, height: 192, borderRadius: 96, backgroundColor: t.primarySoft }} />
-          <Animated.View entering={ZoomIn.delay(160).springify().damping(12)}>
+          <Animated.View style={{ position: 'absolute', width: 264, height: 264, borderRadius: 132, backgroundColor: t.chip }} />
+          <Animated.View style={{ position: 'absolute', width: 192, height: 192, borderRadius: 96, backgroundColor: t.primarySoft }} />
+          <Animated.View>
             <AppMark size={108} />
           </Animated.View>
           <Badge icon="shieldCheck" label="Encrypted" tone="mint" style={{ left: 4, top: 64 }} rotate={-6} delay={320} />
@@ -76,25 +76,26 @@ function Welcome({ onCreate, onRestore }: { onCreate: () => void; onRestore: () 
           <Badge icon="phone" label="Your device" tone="sky" style={{ left: 40, bottom: 34 }} rotate={3} delay={520} />
         </View>
 
-        <Animated.View entering={FadeInDown.delay(200).duration(420)} style={{ gap: 12, marginTop: 8 }}>
+        <Animated.View style={{ gap: 12, marginTop: 8 }}>
           <Text style={[type.overline, { fontSize: 13, color: t.primary }]}>Keystill</Text>
-          <Text style={{ fontFamily: font.extrabold, fontSize: 32, lineHeight: 37, letterSpacing: -0.6, color: t.ink }}>
+          <Text style={{ fontFamily: font.extrabold, fontSize: 26, lineHeight: 32, letterSpacing: -0.4, color: t.ink }}>
             Your passwords.{'\n'}Only on this phone.
           </Text>
-          <P muted style={{ fontSize: 16, lineHeight: 24 }}>
+          <P muted style={{ fontSize: 15, lineHeight: 22 }}>
             Fully encrypted. No accounts, no internet access.
           </P>
         </Animated.View>
 
-        <Animated.View entering={FadeInDown.delay(300).duration(420)} style={{ marginTop: 20 }}>
+        <Animated.View style={{ marginTop: 20 }}>
           <Notice text="No recovery without a backup. Lose your PIN, and your data is gone." />
         </Animated.View>
-
-        <Animated.View entering={FadeInDown.delay(400).duration(420)} style={{ marginTop: 'auto', gap: 12, paddingTop: 20 }}>
-          <Button testID="create-vault" label="Create a new vault" onPress={onCreate} />
-          <Button testID="restore-vault" label="Restore from a backup" kind="soft" onPress={onRestore} />
-        </Animated.View>
       </ScrollView>
+
+      {/* Pinned below the scroll area so the main actions are on screen even on small phones. */}
+      <View style={{ gap: 12, paddingHorizontal: 24, paddingTop: 12, paddingBottom: 12 }}>
+        <Button testID="create-vault" label="Create a new vault" onPress={onCreate} />
+        <Button testID="restore-vault" label="Restore from a backup" kind="soft" onPress={onRestore} />
+      </View>
     </SafeAreaView>
   );
 }
@@ -118,7 +119,6 @@ function Badge({
   const c = { mint: t.tiles[2], peach: t.tiles[1], sky: t.tiles[3] }[tone];
   return (
     <Animated.View
-      entering={ZoomIn.delay(delay).springify().damping(11)}
       style={[
         {
           position: 'absolute',
@@ -186,7 +186,7 @@ export function PinStep({
           <View style={{ width: 44 }} />
         </View>
 
-        <Animated.View key={title} entering={FadeIn.duration(260)} style={{ alignItems: 'center', gap: 10, marginTop: 40 }}>
+        <Animated.View key={title} style={{ alignItems: 'center', gap: 10, marginTop: 40 }}>
           {step ? (
             <Text style={[type.overline, { fontSize: 12, color: t.primary }]}>
               Step {step} of {total}
@@ -216,7 +216,7 @@ export function Working({ label }: { label: string }) {
   const t = useTheme();
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: t.bg, alignItems: 'center', justifyContent: 'center', gap: 20 }}>
-      <AppMark size={80} halo />
+      <AppMark size={80} />
       <Text style={[type.heading, { color: t.ink2 }]} accessibilityLiveRegion="polite">
         {label}
       </Text>

@@ -1,14 +1,12 @@
-import Constants from 'expo-constants';
 import React, { ReactNode, useEffect, useState } from 'react';
 import { Alert, Text, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
 import SecureNative, { DeviceKeyLevel } from '../../../modules/secure-native';
 import { AUTO_LOCK_OPTIONS } from '../../security/autoLock';
 import { useApp } from '../AppContext';
-import { Icon } from '../components/Icon';
 import { Button, Card, IconTile, ListRow, Notice, Overline, Screen, Segmented, Toggle } from '../components/ui';
 import { haptic } from '../haptics';
-import { font, type, useTheme } from '../theme';
+import { type, useTheme } from '../theme';
+import { getThemePref, setThemePref, ThemePref } from '../themePref';
 
 const lockLabel = (ms: number) => (ms < 60_000 ? `${ms / 1000}s` : `${ms / 60_000}m`);
 const lockA11y = (ms: number) => (ms < 60_000 ? `${ms / 1000} seconds` : `${ms / 60_000} minute${ms === 60_000 ? '' : 's'}`);
@@ -18,6 +16,7 @@ export function SettingsScreen() {
   const t = useTheme();
   const [bio, setBio] = useState(false);
   const [level, setLevel] = useState<DeviceKeyLevel | null>(null);
+  const [themePref, setThemePrefState] = useState<ThemePref>(getThemePref);
 
   useEffect(() => {
     void vault.biometricsEnabled().then(setBio);
@@ -46,42 +45,39 @@ export function SettingsScreen() {
     );
   };
 
-  const heroBg = t.dark ? t.primarySoft : '#1B1838';
-
   return (
-    <Screen testID="settings-screen" onBack={back} largeTitle="Settings">
-      <Animated.View entering={FadeInDown.duration(320)}>
-        <View
-          style={{
-            borderRadius: 24,
-            padding: 18,
-            backgroundColor: heroBg,
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 12,
-            boxShadow: t.dark ? undefined : '0px 18px 36px -18px rgba(27,24,56,0.6)',
-          }}
-        >
-          <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: '#1F9D74', alignItems: 'center', justifyContent: 'center' }}>
-            <Icon name="shieldCheck" size={22} color="#FFFFFF" strokeWidth={2.2} />
-          </View>
-          <View style={{ flex: 1, gap: 2 }}>
-            <Text style={{ fontFamily: font.extrabold, fontSize: 16, color: '#F2F0FF' }}>Vault protected</Text>
-            <Text style={[type.caption, { fontFamily: font.medium, color: '#C3BFE6' }]}>
-              All data remains stored locally on your device. Export only when you choose.
-            </Text>
-          </View>
-        </View>
-      </Animated.View>
-
+    <Screen testID="settings-screen" onBack={back} title="Settings">
       {level === 'software' && (
         <Notice text="This phone has no secure hardware for keys. A 4-digit PIN offers weak protection if someone copies the app's files." />
       )}
 
-      <Section title="Unlocking" delay={40}>
+      <Section title="Appearance">
+        <View style={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 14, gap: 12 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+            <IconTile icon="contrast" bg={t.chip} fg={t.primarySoftInk} />
+            <Text style={[type.rowTitle, { flex: 1, color: t.ink }]}>Theme</Text>
+          </View>
+          <View style={{ marginLeft: 52 }}>
+            <Segmented
+              testIDPrefix="theme-"
+              value={themePref}
+              options={[
+                { value: 'system' as ThemePref, label: 'System' },
+                { value: 'light' as ThemePref, label: 'Light' },
+                { value: 'dark' as ThemePref, label: 'Dark' },
+              ]}
+              onChange={(p) => {
+                setThemePrefState(p);
+                void setThemePref(p);
+              }}
+            />
+          </View>
+        </View>
+      </Section>
+
+      <Section title="Unlocking">
         <ListRow
           title="Biometric unlock"
-          subtitle="PIN required every 72 hours or when fingerprints change"
           leading={<IconTile icon="fingerprint" bg={t.primarySoft} fg={t.primarySoftInk} />}
           trailing={<Toggle value={bio} onChange={(v) => void toggleBio(v)} label="Biometric unlock" testID="toggle-biometrics" />}
         />
@@ -89,10 +85,7 @@ export function SettingsScreen() {
         <View style={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 14, gap: 12 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
             <IconTile icon="clock" bg={t.tiles[1].bg} fg={t.tiles[1].fg} />
-            <View style={{ flex: 1, gap: 2 }}>
-              <Text style={[type.rowTitle, { color: t.ink }]}>Auto-lock when idle</Text>
-              <Text style={[type.secondary, { color: t.muted }]}>Always locks instantly when you leave the app.</Text>
-            </View>
+            <Text style={[type.rowTitle, { flex: 1, color: t.ink }]}>Auto-lock when idle</Text>
           </View>
           <View style={{ marginLeft: 52 }}>
             <Segmented
@@ -116,7 +109,7 @@ export function SettingsScreen() {
         />
       </Section>
 
-      <Section title="Backup" delay={80}>
+      <Section title="Backup">
         <ListRow
           testID="open-export"
           title="Backup"
@@ -132,10 +125,17 @@ export function SettingsScreen() {
         />
       </Section>
 
-      <Section title="About" delay={120}>
+      <Section title="About">
+        <ListRow
+          testID="open-about"
+          title="App"
+          leading={<IconTile icon="info" bg={t.primarySoft} fg={t.primarySoftInk} />}
+          onPress={() => go({ name: 'about' })}
+        />
+        <Sep />
         <ListRow
           testID="open-licenses"
-          title="Acknowledgements"
+          title="Third party"
           leading={<IconTile icon="book" bg={t.chip} fg={t.ink2} />}
           onPress={() => go({ name: 'licenses' })}
         />
@@ -143,20 +143,17 @@ export function SettingsScreen() {
 
       <View style={{ marginTop: 8, gap: 10 }}>
         <Button testID="erase-vault" label="Erase vault" kind="danger" icon="trash" size="md" onPress={erase} />
-        <Text style={[type.caption, { fontSize: 12, color: t.muted, textAlign: 'center' }]}>
-          Keystill {Constants.expoConfig?.version ?? ''}
-        </Text>
       </View>
     </Screen>
   );
 }
 
-function Section({ title, children, delay }: { title: string; children: ReactNode; delay: number }) {
+function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <Animated.View entering={FadeInDown.delay(delay).duration(320)} style={{ gap: 10, marginTop: 6 }}>
+    <View style={{ gap: 10, marginTop: 6 }}>
       <Overline style={{ paddingLeft: 4 }}>{title}</Overline>
       <Card padded={false}>{children}</Card>
-    </Animated.View>
+    </View>
   );
 }
 
