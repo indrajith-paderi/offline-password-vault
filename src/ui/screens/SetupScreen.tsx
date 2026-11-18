@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Vault } from '../../vault/vault';
 import { nextFrame } from '../AppContext';
@@ -186,7 +186,7 @@ export function PinStep({
           <View style={{ width: 44 }} />
         </View>
 
-        <Animated.View key={title} entering={FadeIn.duration(260)} style={{ alignItems: 'center', gap: 10, marginTop: 40 }}>
+        <Animated.View key={title} style={{ alignItems: 'center', gap: 10, marginTop: 40 }}>
           {step ? (
             <Text style={[type.overline, { fontSize: 12, color: t.primary }]}>
               Step {step} of {total}

@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { FlatList, Text, View } from 'react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useApp } from '../AppContext';
 import { Icon } from '../components/Icon';
@@ -82,7 +82,7 @@ export function LicensesScreen() {
                   </View>
                 </View>
                 {expanded && (
-                  <Animated.View entering={FadeIn.duration(200)} style={{ marginTop: 12, gap: 8 }}>
+                  <Animated.View style={{ marginTop: 12, gap: 8 }}>
                     {!!item.url && (
                       <Text selectable style={{ fontFamily: font.medium, color: t.muted, fontSize: 12 }}>
                         {item.url}

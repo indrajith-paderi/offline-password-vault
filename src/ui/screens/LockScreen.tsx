@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, ScrollView, Text, View } from 'react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle } from 'react-native-svg';
 import { Vault } from '../../vault/vault';
@@ -104,7 +104,7 @@ export function LockScreen({ vault, blocked, warnings }: { vault: Vault; blocked
         bounces={false}
       >
         {locked ? (
-          <Animated.View key="locked" entering={FadeIn.duration(150)} style={{ alignItems: 'center' }}>
+          <Animated.View key="locked" style={{ alignItems: 'center' }}>
             <LockoutRing fraction={Math.min(1, lockedForMs / LOCKOUT_WINDOW_MS)} />
             <View style={{ height: 22 }} />
             <H1 center>Too many wrong PINs.</H1>
@@ -139,7 +139,7 @@ export function LockScreen({ vault, blocked, warnings }: { vault: Vault; blocked
               <Pill kind="error" icon="info" text={message} />
             </Animated.View>
           ) : busy && !locked ? (
-            <Animated.View entering={FadeIn.delay(250)}>
+            <Animated.View>
               <Text style={{ fontFamily: font.semibold, fontSize: 14, color: t.muted }}>Checking…</Text>
             </Animated.View>
           ) : null}

@@ -2,8 +2,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Text, View } from 'react-native';
 import Animated, {
   Easing,
-  FadeIn,
-  FadeOut,
   useAnimatedProps,
   useSharedValue,
   withTiming,
@@ -54,8 +52,6 @@ export function CopyToast({ event, onDone }: { event: CopyEvent; onDone: () => v
 
   return (
     <Animated.View
-      entering={FadeIn.duration(150)}
-      exiting={FadeOut.duration(150)}
       pointerEvents="none"
       style={{ position: 'absolute', left: 0, right: 0, bottom: 28, alignItems: 'center' }}
     >

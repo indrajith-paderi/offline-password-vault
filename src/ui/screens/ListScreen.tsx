@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { FlatList, Text, View } from 'react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import type { ListedEntry } from '../../vault/vault';
@@ -157,7 +157,7 @@ function Fab({ onPress }: { onPress: () => void }) {
 function EmptyVault() {
   const t = useTheme();
   return (
-    <Animated.View entering={FadeIn.duration(150)} style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20, paddingTop: 40 }}>
+    <Animated.View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20, paddingTop: 40 }}>
       <View style={{ width: 200, height: 170 }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
         <View style={[cardStack, { backgroundColor: t.primarySoft, transform: [{ rotate: '-8deg' }] }]} />
         <View style={[cardStack, { backgroundColor: t.tiles[1].bg, transform: [{ rotate: '6deg' }] }]} />
@@ -190,7 +190,7 @@ function EmptyVault() {
 function NoMatches() {
   const t = useTheme();
   return (
-    <Animated.View entering={FadeIn.duration(150)} style={{ alignItems: 'center', paddingTop: 48, gap: 10 }}>
+    <Animated.View style={{ alignItems: 'center', paddingTop: 48, gap: 10 }}>
       <View style={{ width: 56, height: 56, borderRadius: 18, backgroundColor: t.chip, alignItems: 'center', justifyContent: 'center' }}>
         <Icon name="search" size={24} color={t.muted} />
       </View>

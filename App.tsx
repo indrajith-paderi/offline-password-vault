@@ -4,7 +4,7 @@ import * as SystemUI from 'expo-system-ui';
 import { StatusBar } from 'expo-status-bar';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { BackHandler, Platform, View } from 'react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import sodium from 'react-native-libsodium';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useAutoLock } from './src/security/autoLock';
@@ -30,9 +30,6 @@ import { Settings, Vault } from './src/vault/vault';
 
 void SplashScreen.preventAutoHideAsync();
 SplashScreen.setOptions({ duration: 250, fade: true });
-
-/** Screens swap with a short cross-fade only: no sliding, scaling or bouncing. */
-const ENTER = FadeIn.duration(150);
 
 type Boot =
   | { phase: 'loading' }
@@ -141,7 +138,7 @@ export default function App() {
     <SafeAreaProvider>
       <StatusBar style="auto" />
       <View style={{ flex: 1, backgroundColor: t.bg }} onTouchStart={poke}>
-        <Animated.View key={sceneKey} entering={ENTER} style={{ flex: 1 }}>
+        <Animated.View key={sceneKey} style={{ flex: 1 }}>
           {ctx ? <AppContext.Provider value={ctx}>{body}</AppContext.Provider> : body}
         </Animated.View>
       </View>

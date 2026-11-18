@@ -1,7 +1,7 @@
 import Constants from 'expo-constants';
 import React, { useState } from 'react';
 import { Alert, Text, View } from 'react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { saveBackupToFolder, shareBackup } from '../../backup/backupFiles';
 import { backupFileName, createBackup } from '../../backup/format';
 import { backupPasswordChecks, backupPasswordProblem } from '../../backup/passwordPolicy';
@@ -112,7 +112,7 @@ export function ExportScreen() {
         }
       />
       {mismatch && (
-        <Animated.View entering={FadeIn}>
+        <Animated.View>
           <Notice kind="error" text="Passwords don't match." />
         </Animated.View>
       )}

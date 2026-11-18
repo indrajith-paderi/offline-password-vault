@@ -1,6 +1,6 @@
 import React, { ReactNode, useEffect, useState } from 'react';
 import { Alert, ScrollView, Text, View } from 'react-native';
-import Animated, { Easing, FadeIn, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { copySecret } from '../../security/clipboard';
 import type { Entry } from '../../vault/types';
@@ -77,7 +77,7 @@ export function EntryScreen({ id }: { id: string }) {
       <View key="p">
         <FieldRow label="Password">
           {reveal ? (
-            <Animated.View entering={FadeIn.duration(180)}>
+            <Animated.View>
               <ColoredSecret value={entry.password} />
             </Animated.View>
           ) : (
@@ -257,7 +257,7 @@ function RevealTimer() {
   }, [p]);
   const bar = useAnimatedStyle(() => ({ transform: [{ scaleX: p.value }] }));
   return (
-    <Animated.View entering={FadeIn.duration(200)} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingLeft: 18, paddingRight: 16, paddingBottom: 12 }}>
+    <Animated.View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingLeft: 18, paddingRight: 16, paddingBottom: 12 }}>
       <View style={{ flex: 1, height: 4, borderRadius: 2, backgroundColor: t.divider, overflow: 'hidden' }}>
         <Animated.View style={[{ height: 4, borderRadius: 2, backgroundColor: t.toastRing, transformOrigin: 'left' }, bar]} />
       </View>
